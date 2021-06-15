@@ -4,27 +4,23 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUserEmployeeTable extends Migration {
-    
+class CreateEmployeeAppsTable extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
      */
     public function up() {
-        Schema::create('user_employee', function (Blueprint $table) {
-            $table->increments('id');
+        Schema::create('employee_apps', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
             $table->bigInteger('user_id')->unsigned();
-            $table->bigInteger('employee_id')->unsigned();
-            $table->enum('status', ['sent', 'accepted', 'rejected'])->default('sent');
-            $table->string('name')->nullable()->default(null);
-            $table->boolean('daily_reports')->default(0);
-            $table->boolean('weekly_reports')->default(0);
-            $table->boolean('monthly_reports')->default(0);
-            $table->boolean('send_a_copy_to_employee')->default(0);
-            $table->boolean('disabled')->default(0);
+            $table->bigInteger('employee_id')->unsigned()->nullable()->default(null);
+            $table->bigInteger('category_id')->unsigned();
 
             $table->timestamps();
+
+            $table->unique(['name', 'employee_id', 'user_id', 'category_id']);
 
             $table->foreign('user_id')->references('id')->on('users')
                 ->onDelete('cascade')
@@ -33,6 +29,10 @@ class CreateUserEmployeeTable extends Migration {
             $table->foreign('employee_id')->references('id')->on('users')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
+
+            $table->foreign('category_id')
+                ->references('id')->on('categories')
+                ->onDelete('cascade');
         });
     }
 
@@ -42,6 +42,6 @@ class CreateUserEmployeeTable extends Migration {
      * @return void
      */
     public function down() {
-        Schema::dropIfExists('user_employee');
+        Schema::dropIfExists('employee_apps');
     }
 }

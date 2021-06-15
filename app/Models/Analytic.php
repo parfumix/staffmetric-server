@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Analityc extends Model {
+class Analytic extends Model {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'employer_id', 'device_id', 'last_index_id', 'last_index_idle', 'total_secs',
+    protected $fillable = ['user_id', 'employer_id', 'device_id', 'last_index_id', 'total_secs',
         'productive_secs', 'neutral_secs', 'non_productive_secs', 'idle_secs', 'idle_count',
         'email_secs', 'office_secs', 'overtime_secs', 'meetings_secs', 'social_network_secs', 'app_usage', 'web_usage', 'employee_time'];
 

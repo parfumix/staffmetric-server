@@ -9,7 +9,7 @@ class Activity extends Model {
 
     use HasFactory;
 
-    protected $fillable = ['device_id', 'user_id', 'user_id', 'app', 'duration', 'full_url', 'start_at', 'end_at'];
+    protected $fillable = ['project_id', 'device_id', 'user_id', 'category_id', 'app', 'full_url', 'duration', 'start_at', 'end_at'];
 
     public $timestamps = true;
 
@@ -28,6 +28,15 @@ class Activity extends Model {
      */
     public function scopeAuthenticated($query) {
         return $query->where('user_id', \Auth::id());
+    }
+
+    /**
+     * Get project instance .
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function project() {
+        return $this->belongsTo(Project::class);
     }
 
     /**
@@ -73,6 +82,15 @@ class Activity extends Model {
      */
     public function isUrl() {
         return !$this->isApp();
+    }
+
+    /**
+     * Is Idle
+     *
+     * @return bool
+     */
+    public function isIdle() {
+        return !$this->isApp() && !$this->isUrl();
     }
 
 }

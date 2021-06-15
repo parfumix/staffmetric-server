@@ -15,7 +15,7 @@ class CreateAnalyticsTable extends Migration {
         Schema::create('analytics', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('last_index_id')->unsigned()->nullable()->default(null);
-            $table->integer('last_index_idle')->unsigned()->nullable()->default(null);
+            $table->bigInteger('project_id')->unsigned()->nullable()->default(null);
             $table->bigInteger('device_id')->unsigned()->nullable()->default(null);
             $table->bigInteger('user_id')->unsigned();
             $table->bigInteger('employer_id')->unsigned()->nullable()->default(null);
@@ -35,6 +35,10 @@ class CreateAnalyticsTable extends Migration {
             $table->timestamp('employee_time')->nullable();
             $table->timestamps();
 
+            $table->foreign('project_id')
+                ->references('id')->on('projects')
+                ->onDelete('cascade');
+                
             $table->foreign('employer_id')
                 ->references('id')->on('users')
                 ->onDelete('cascade');
