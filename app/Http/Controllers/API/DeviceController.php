@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use Webpatser\Uuid\Uuid;
+use App\Http\Controllers\Controller;
 
 class DeviceController extends Controller {
     

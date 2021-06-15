@@ -39,10 +39,8 @@ class AuthController extends Controller {
         }
 
         return response()->json([
-            'data' => [
-                'token' => auth()->user()->createToken('API Token')->plainTextToken,
-            ]
-		]);
+            'success' => true
+        ]);
     }
 
     public function logout() {
