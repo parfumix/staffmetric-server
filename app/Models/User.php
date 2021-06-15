@@ -116,7 +116,6 @@ class User extends Authenticatable {
         return $this->hasMany(TopApp::class);
     }
 
-
     /**
      * Get the route key for the model.
      *

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
+use App\Http\Controllers\API\AnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,4 +25,8 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
     // adding upload routes
     Route::post('/upload/activities/{device}', [UploadController::class, 'activities']);
+
+    // adding analytics reports
+    Route::get('analytics/productivity/{user?}', [AnalyticsController::class, 'productivity']);
+    Route::get('analytics/burnout/{user?}', [AnalyticsController::class, 'burnout']);
 });

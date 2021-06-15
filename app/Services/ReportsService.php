@@ -848,49 +848,6 @@ class ReportsService {
         return $query->get();
     }
 
-    //-----------------------------------------------------
-    // Screenshots
-    //-----------------------------------------------------
-
-    public function getScreenshots(array $employees, array $params = [], Carbon $date = null, $perPage = null) {
-        $query = \App\Screenshot::with(['category', 'user', 'device'])->whereIn('user_id', $employees );
-
-        if( isset( $params['title'] ) )
-            $query->where('title', 'like', $params['title'] . '%');
-
-        if( isset($params['limit']))
-            $query->limit($params['limit']);
-
-        if(! is_null($date))
-            $query->whereDate('screenshots.created_at', $date->format('Y-m-d'));
-
-        $query = $query->orderBy('screenshots.created_at', 'desc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getCategorizedScreenshots(array $employees, Carbon $date = null) {
-        $query = \DB::table('screenshots')
-            ->select(
-                \DB::raw('count(screenshots.id) as total'),
-                \DB::raw('IFNULL(categories.title, "Uncategorized") as title'),
-                \DB::raw('IFNULL(categories.productivity, "neutral") as productivity')
-            )
-            ->leftJoin('categories', 'categories.id', '=', 'screenshots.category_id')
-            ->whereIn('screenshots.user_id', $employees );
-
-        if( ! is_null($date))
-            $query->whereDate('screenshots.created_at', $date->format('Y-m-d'));
-
-        $query = $query
-            ->groupBy(['screenshots.category_id'])
-            ->orderBy('productivity', 'desc');
-
-        return $query->get();
-    }
-
 
     //-----------------------------------------------------
     // Analytics
@@ -1127,29 +1084,6 @@ class ReportsService {
         $query->limit(4);
 
         return $query->get();
-    }
-
-
-    public function getIdle($employee_id, Carbon $date = null, $last_activity_index = null) {
-        $user_idle_query = \App\Models\User::findOrFail($employee_id)->idle()
-            ->addSelect(
-                \DB::raw('project_id'),
-                \DB::raw('SUM(duration) as idle_secs'),
-                \DB::raw('COUNT(id) as idle_count')
-            );
-
-        if( isset($last_activity_index) && !is_null($last_activity_index) ) {
-            $user_idle_query->where('idle.id', '>' , $last_activity_index);
-        }
-
-        if($date) {
-            $user_idle_query->whereDate('idle.start_at', $date->format('Y-m-d'));
-        }
-
-        return $user_idle_query
-            ->orderBy('created_at', 'desc')
-            ->groupBy(['project_id'])
-            ->get();
     }
 
     public function getAppsByUser(\App\Models\User $user, $group_by_category = true) {
