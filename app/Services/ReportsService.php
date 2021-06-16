@@ -633,11 +633,11 @@ class ReportsService {
 
         $query->select([
             \DB::raw("user_id"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%H') as hour"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%Y-%m-%d') as day"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%Y/%V') as week"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%Y-%m') as month"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%Y') as year"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%H') as hour"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y-%m-%d') as day"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y/%V') as week"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y-%m') as month"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y') as year"),
         ]);
 
         $columns = (array)$columns;
@@ -659,7 +659,7 @@ class ReportsService {
             $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
         }
 
-        $query->groupBy([$groupBy])
+        $query->groupBy($groupBy)
             ->orderBy($groupBy);
 
         return $query;
