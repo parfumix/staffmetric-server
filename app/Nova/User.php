@@ -4,12 +4,15 @@ namespace App\Nova;
 
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\Gravatar;
+use Laravel\Nova\Fields\HasMany;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Password;
 use Laravel\Nova\Fields\Text;
+use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\BelongsToMany;
 
-class User extends Resource
-{
+class User extends Resource {
+    
     /**
      * The model the resource corresponds to.
      *
@@ -39,8 +42,7 @@ class User extends Resource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function fields(Request $request)
-    {
+    public function fields(Request $request) {
         return [
             ID::make()->sortable(),
 
@@ -49,6 +51,12 @@ class User extends Resource
             Text::make('Name')
                 ->sortable()
                 ->rules('required', 'max:255'),
+
+            Password::make('Password')->onlyOnForms()->creationRules('required', 'string', 'min:8')->updateRules('nullable', 'string', 'min:8'),
+
+            BelongsTo::make('Profile')->hideFromIndex()->rules('required'),
+            HasMany::make('Devices'),
+            HasMany::make('Projects'),
 
             Text::make('Email')
                 ->sortable()
@@ -69,8 +77,7 @@ class User extends Resource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function cards(Request $request)
-    {
+    public function cards(Request $request) {
         return [];
     }
 
@@ -80,8 +87,7 @@ class User extends Resource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function filters(Request $request)
-    {
+    public function filters(Request $request) {
         return [];
     }
 
@@ -91,8 +97,7 @@ class User extends Resource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function lenses(Request $request)
-    {
+    public function lenses(Request $request) {
         return [];
     }
 
@@ -102,8 +107,7 @@ class User extends Resource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function actions(Request $request)
-    {
+    public function actions(Request $request) {
         return [];
     }
 }

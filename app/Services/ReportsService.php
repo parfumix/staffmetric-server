@@ -130,44 +130,6 @@ class ReportsService {
 
 
     //-----------------------------------------------------
-    // Pie
-    //-----------------------------------------------------
-
-    public function getPieByProductivity($employee_id, Carbon $date, $employer_id = null, $mode = null) {
-        $query = \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        if( $mode == 'weekly' ) {
-            $start_of_week_date = $date->copy()->startOfWeek();
-            $end_of_week_date = $date->copy()->endOfWeek();
-
-            $query->whereDate('activities.start_at', '>=', $start_of_week_date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $end_of_week_date->format('Y-m-d'));
-        } elseif ( $mode == 'monthly' ) {
-            $start_of_month_date = $date->copy()->startOfMonth();
-            $end_of_month_date = $date->copy()->endOfMonth();
-
-            $query->whereDate('activities.start_at', '>=', $start_of_month_date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $end_of_month_date->format('Y-m-d'));
-        } elseif ( $mode == 'yearly' ) {
-            $start_of_year_date = $date->copy()->startOfYear();
-            $end_of_year_date = $date->copy()->endOfYear();
-
-            $query->whereDate('activities.start_at', '>=', $start_of_year_date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $end_of_year_date->format('Y-m-d'));
-        } else {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['productivity']);
-
-        return $query->get();
-    }
-
-
-    //-----------------------------------------------------
     // Apps
     //-----------------------------------------------------
 
@@ -188,7 +150,7 @@ class ReportsService {
     }
 
     public function getEmployeesReportsByApps($employer_id, array $employees, Carbon $date = null, Carbon $end_at = null) {
-        $query = \App\Activity::with(['device', 'user'])
+        $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
         $query->addSelect(['app', 'full_url']);
@@ -213,7 +175,7 @@ class ReportsService {
         return $query->get();
     }
 
-    public function getReportsByApps( $employee_id, $employer_id = null, Carbon $date = null, \App\Device $device = null, $perPage = null ) {
+    public function getReportsByApps( $employee_id, $employer_id = null, Carbon $date = null, \App\Models\Device $device = null, $perPage = null ) {
         $query = $device
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
@@ -346,9 +308,9 @@ class ReportsService {
     }
 
     public function getEmployeesReportsByCategories($employer_id, array $employees, Carbon $date = null) {
-        $general_categories = \App\Category::whereNull('user_id')->get();
+        $general_categories = \App\Models\Category::whereNull('user_id')->get();
 
-        $query = \App\Activity::with(['device', 'user'])
+        $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
         $query = $this->categorize($query, $employer_id);
@@ -490,7 +452,7 @@ class ReportsService {
     }
 
     public function getEmployeesReportsByProductivity($employer_id, array $employees, Carbon $date = null, Carbon $end_date = null) {
-        $query = \App\Activity::with(['device', 'user'])
+        $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
         $query = $this->categorize($query, $employer_id);
@@ -515,7 +477,7 @@ class ReportsService {
 
 
     public function getEmployeesProductiveReports($employer_id, array $employees, Carbon $date = null) {
-        $query = \App\Activity::with(['device', 'user'])
+        $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
         $query = $this->categorize($query, $employer_id);
@@ -534,7 +496,7 @@ class ReportsService {
     }
 
     public function getEmployeesDailyProductivityReports($employer_id, array $employees, Carbon $from = null, Carbon $to = null) {
-        $query = \App\Activity::with(['device', 'user'])
+        $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
         $query = $this->categorize($query, $employer_id);
@@ -662,349 +624,15 @@ class ReportsService {
 
 
     //-----------------------------------------------------
-    // Device
-    //-----------------------------------------------------
-
-    public function getProductivityDevices( $user_id = null, Carbon $start_date = null, Carbon $end_date = null, $limit = null ) {
-        $query = (!is_null($user_id)
-            ? \App\Models\User::findOrFail($user_id)->activities()
-            : auth()->user()->activities()
-        );
-
-        $query->addSelect([
-            'devices.uuid as device_uuid',
-            'devices.id as device_id',
-            'devices.name as device_name',
-        ]);
-
-        $query = $this->categorize($query);
-
-        $query->join('devices', 'devices.id', '=', 'activities.device_id');
-
-
-        if( is_null( $end_date ) && !is_null($start_date) ) {
-            $query->whereDate('activities.created_at', $start_date->format('Y-m-d'));
-
-        } elseif ( !is_null( $start_date ) && !is_null( $end_date ) ) {
-            $query->whereDate('activities.created_at', '>=', $start_date->format('Y-m-d'))
-                ->whereDate('activities.created_at', '<=', $end_date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['device_id'])
-            ->orderBy('duration', 'desc');
-
-        $query->having('productivity', 'productive');
-
-        if(! is_null($limit))
-            $query->limit( $limit );
-
-        return $query->get();
-    }
-
-
-    //-----------------------------------------------------
-    // Employee
-    //-----------------------------------------------------
-
-
-    public function getEmployeeReportsByApp( $employer_id, $employee_id, Carbon $date = null, $perPage = null ) {
-        $query = \App\Models\User::findOrFail(
-            $employee_id
-        )->activities();
-
-        $query->addSelect(['app', 'full_url']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['app'])
-            ->orderBy('duration', 'desc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getEmployeeUncategorizedApps( $employer_id, $employee_id, Carbon $date = null, $perPage = null ) {
-        $query = \App\Models\User::findOrFail(
-            $employee_id
-        )->activities();
-
-        $query->addSelect(['app', 'full_url']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        $query->havingRaw(\DB::raw('category_id is null'));
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['app'])
-            ->orderBy('duration', 'desc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getEmployeeIgnoredApps( $employer_id, $employee_id, Carbon $date = null, $perPage = null ) {
-        $query = \App\Models\User::findOrFail(
-            $employee_id
-        )->activities();
-
-        $query->addSelect(['app', 'full_url']);
-
-        $query = $this->categorize($query, $employer_id, false);
-
-        $query->whereNotNull('my_apps.deleted_at');
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['app'])
-            ->orderBy('duration', 'desc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getEmployeeAppTotalTime( $employee_id, Carbon $date = null, Carbon $end = null, $only_urls = false, $last_activity_index = null ) {
-        $query = \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect([
-            \DB::raw("activities.project_id as project_id"),
-            \DB::raw("sum(activities.duration) as duration"),
-        ]);
-
-        if( $last_activity_index ) {
-            $query->where('activities.id', '>', $last_activity_index);
-        }
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
-
-            if( is_null( $end ) ) {
-                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-            }
-        }
-
-        if(! is_null($end)) {
-            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
-        }
-
-        if( $only_urls === true ) {
-            $query->whereNotNull('activities.full_url');
-        } else {
-            $query->whereNull('activities.full_url');
-        }
-
-        $query->groupBy(['activities.project_id']);
-
-        return $query->get();
-    }
-
-    public function getEmployeeProviderTotalTime( $employee_id, $providers, Carbon $date = null, Carbon $end = null, $last_activity_index = null ) {
-        $query = \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect([
-            \DB::raw("activities.project_id as project_id"),
-            \DB::raw("sum(activities.duration) as duration"),
-        ]);
-
-        if( $last_activity_index ) {
-            $query->where('activities.id', '>', $last_activity_index);
-        }
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
-
-            if( is_null( $end ) ) {
-                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-            }
-        }
-        if(! is_null($end)) {
-            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
-        }
-
-        $query->whereNotNull('activities.full_url');
-
-        $query->where(function ($query) use($providers) {
-            foreach ($providers as $provider) {
-                $query->orWhere('app', 'like', '%' . $provider . '%');
-            }
-        });
-
-        $query->groupBy(['activities.project_id']);
-
-        return $query->get();
-    }
-
-
-    //-----------------------------------------------------
     // Analytics
     //-----------------------------------------------------
 
-    public function getMonthlyAnalytics($employee_id, $employer_id = null, Carbon $date, $device = null) {
-        $query = $this->getAnalytics($employee_id, $employer_id, null, $device);
-
-        $start_of_year_date = $date->copy()->startOfYear();
-        $end_of_year_date = $date->copy()->endOfYear();
-
-        $query->addSelect([
-            \DB::raw('MONTH(analytics.employee_time) as month'),
-            \DB::raw('YEAR(analytics.employee_time) as year'),
-            'user_id',
-            'employer_id',
-        ]);
-
-        $query->whereDate('analytics.employee_time', '>=', $start_of_year_date->format('Y-m-d'))
-            ->whereDate('analytics.employee_time', '<=', $end_of_year_date->format('Y-m-d'));
-
-        $query->groupBy(['month'])
-            ->orderBy('month', 'asc');
-
-        return $query->get();
-    }
-
-    public function getHourlyAnalytics($employee_id, $employer_id, Carbon $date, $device = null) {
-        $query = $this->getAnalytics($employee_id, $employer_id, $date, $device);
-
-        $query->select([
-            \DB::raw('HOUR(analytics.employee_time) as hour'),
-            \DB::raw('SUM(total_secs) as total_secs'),
-        ]);
-
-        $query->groupBy(['hour'])
-            ->orderBy('hour', 'asc');
-
-        return $query->get();
-    }
-
-    public function getDailyAnalytics($employee_id, $employer_id, Carbon $date, $device = null) {
-        return $this->getAnalytics($employee_id, $employer_id, $date, $device)->get()->first();
-    }
-
-    public function getAnalytics($employee_id, $employer_id = null, Carbon $date = null, $device = null) {
-        $query = $device
-            ? $device->analytics()
-            : \App\Models\User::findOrFail($employee_id)->analytics();
-
-        if(! is_null($employer_id)) {
-            $query->where('employer_id', $employer_id);
-        }
-
-        if(! is_null($date)) {
-            $query->whereDate('analytics.employee_time', '>=', $date->format('Y-m-d'))
-                ->whereDate('analytics.employee_time', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->select([
-            \DB::raw('SUM(total_secs) as total_secs'),
-            \DB::raw('SUM(productive_secs) as productive_secs'),
-            \DB::raw('SUM(neutral_secs) as neutral_secs'),
-            \DB::raw('SUM(non_productive_secs) as non_productive_secs'),
-            \DB::raw('SUM(idle_secs) as idle_secs'),
-            \DB::raw('SUM(idle_count) as idle_count'),
-            \DB::raw('SUM(email_secs) as email_secs'),
-            \DB::raw('SUM(office_secs) as office_secs'),
-            \DB::raw('SUM(overtime_secs) as overtime_secs'),
-            \DB::raw('SUM(meetings_secs) as meetings_secs'),
-            \DB::raw('SUM(social_network_secs) as social_network_secs'),
-            \DB::raw('SUM(app_usage) as app_usage'),
-            \DB::raw('SUM(web_usage) as web_usage'),
-        ]);
-
-        return $query;
-    }
-
-    public function getProductivityAnalytics($employer_id, array $employees = [], $fields = [], Carbon $start, Carbon $end) {
-        $query = \DB::table('analytics')
-            ->where('analytics.employer_id', $employer_id);
-
-        $field_selectors = [];
-        foreach ($fields as $field) {
-            $field_selectors[] = \DB::raw("IFNULL(SUM({$field}), 0) as {$field}");
-        }
-
-        $field_selectors[] = 'analytics.user_id';
-        $field_selectors[] = \DB::raw('IFNULL(analytics.project_id, "uncategorized") as project_id');
-        $query->select($field_selectors);
-
-        if($employees) {
-            $query->whereIn('analytics.user_id', $employees);
-        }
-
-        if(! is_null($start)) {
-            $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));
-        }
-
-        if(! is_null($end)) {
-            $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
-        }
-
-        $query->leftJoin('projects', 'projects.id', '=', 'analytics.project_id');
-        $query->leftJoin('project_user', function ($join) {
-            $join->on('project_user.project_id', '=', 'projects.id')
-                ->where('project_user.user_id', '=', \DB::raw('analytics.user_id'));
-        });
-        $query->leftJoin('users', 'users.id', '=', 'analytics.user_id');
-        $query->leftJoin('user_employee', function ($join) {
-            $join->on('user_employee.user_id', '=', 'projects.user_id')
-                ->where('user_employee.employee_id', '=', \DB::raw('users.id'));
-        });
-
-        $query->addSelect([
-            \DB::raw('IFNULL(project_user.hourly_rate, user_employee.hourly_rate) as hourly_rate'),
-            \DB::raw('CAST(IFNULL(project_user.hourly_rate, user_employee.hourly_rate) AS DECIMAL(10,4)) * ((CAST(SUM(analytics.total_secs) AS DECIMAL(10,4)) / 60) / 60) as money_spent'),
-        ]);
-
-        $query->groupBy(['analytics.user_id', 'analytics.project_id']);
-
-        return $query->get();
-    }
-
-    public function getMostPopularMailHours($employer_id, array $employees = [], Carbon $start, Carbon $end) {
-        $query = \App\Analytic::where('analytics.employer_id', $employer_id);
-
-        $query->select([
-            \DB::raw("SUM(email_secs) as email_secs"),
-            \DB::raw("HOUR(created_at) as hour"),
-        ]);
-
-        if($employees) {
-            $query->whereIn('analytics.user_id', $employees);
-        }
-
-        if(! is_null($start)) {
-            $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));
-        }
-
-        if(! is_null($end)) {
-            $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
-        }
-
-        $query->groupBy('hour')
-            ->orderBy('hour');
-
-        return $query->get();
-    }
-
-    public function getEmployeesAnalytics($employer_id, array $employees, $columns, Carbon $start, Carbon $end, $groupBy = 'day') {
+    public function getQueryAnalytics($employer_id, array $employees = [], array $columns = [], Carbon $start, Carbon $end, $groupBy = 'day') {
         $query = \DB::table('analytics')
             ->where('analytics.employer_id', $employer_id);
 
         $query->select([
             \DB::raw("user_id"),
-            \DB::raw("IFNULL(analytics.project_id, 'uncategorized') as project_id"),
             \DB::raw("DATE_FORMAT(analytics.created_at, '%H') as hour"),
             \DB::raw("DATE_FORMAT(analytics.created_at, '%Y-%m-%d') as day"),
             \DB::raw("DATE_FORMAT(analytics.created_at, '%Y/%V') as week"),
@@ -1017,7 +645,7 @@ class ReportsService {
             $query->addSelect(\DB::raw("IFNULL(SUM(analytics.{$column}), 0) as {$column}"));
         }
 
-        if($employees) {
+        if(count($employees)) {
             $query->whereIn('analytics.user_id', $employees)
                 ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
                 ->addSelect([\DB::raw('users.name as name')]);
@@ -1031,42 +659,28 @@ class ReportsService {
             $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
         }
 
-        $query->groupBy([$groupBy, 'user_id', 'analytics.project_id']);
+        $query->groupBy([$groupBy])
+            ->orderBy($groupBy);
 
-        return $query->get();
+        return $query;
     }
 
-    public function getEmailAnalyticsByDays($employer_id, array $employees = [], Carbon $start, Carbon $end) {
-        $query = \DB::table('analytics')
-            ->where('analytics.employer_id', $employer_id);
-
-        $query->select([
-            \DB::raw("user_id"),
-            \DB::raw("IFNULL(SUM(analytics.email_secs), 0) as email_secs"),
-            \DB::raw("DATE_FORMAT(analytics.created_at, '%Y-%m-%d') as day")
-        ]);
-
-        if($employees) {
-            $query->whereIn('analytics.user_id', $employees)
-                ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
-                ->addSelect([\DB::raw('users.name as name')]);
-        }
-
-        if(! is_null($start)) {
-            $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));
-        }
-
-        if(! is_null($end)) {
-            $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
-        }
-
-        $query->groupBy(['day', 'user_id']);
-
-        return $query->get();
+    public function getProductivityAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'month') {
+        return $this->getQueryAnalytics($employer_id, $employees, ['productive_secs', 'neutral_secs', 'non_productive_secs'], $start, $end, $groupBy)->get();
     }
+
+    public function getEmailAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'hour') {
+        return $this->getQueryAnalytics($employer_id, $employees, ['email_secs'], $start, $end, $groupBy)->get();
+    }
+
+
+
+    //-----------------------------------------------------
+    // Top Apps
+    //-----------------------------------------------------
 
     public function getTopAnalytics(array $employees, Carbon $start, Carbon $end, Category $category = null) {
-        $query = \App\TopApp::whereIn('top_apps.user_id', $employees)
+        $query = \App\Models\TopApp::whereIn('top_apps.user_id', $employees)
             ->addSelect([
                 'app',
                 \DB::raw("sum(duration) as duration"),
