@@ -28,12 +28,18 @@ class AnalyticsController extends Controller {
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
-        $data = $reportsService->getProductivityAnalytics(
+        
+        $prev_period_dta = $reportsService->getProductivityAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_of_date, $end_of_date
+        );
+
+        $current_period_data = $reportsService->getProductivityAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $start_of_date, $end_of_date
         );
 
         return response()->json([
-            'data' => $data
+            'prev_period_dta' => $prev_period_dta,
+            'current_period_data' => $current_period_data
         ]);
     }
 
