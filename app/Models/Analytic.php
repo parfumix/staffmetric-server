@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Analytic extends Model {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'employer_id', 'device_id', 'last_index_id', 'total_secs',
+    protected $fillable = ['last_index_id', 'project_id', 'device_id', 'user_id', 'employer_id', 'total_secs',
         'productive_secs', 'neutral_secs', 'non_productive_secs', 'idle_secs', 'idle_count',
         'email_secs', 'office_secs', 'overtime_secs', 'meetings_secs', 'social_network_secs', 'app_usage', 'web_usage', 'employee_time'];
 
@@ -41,17 +41,8 @@ class Analytic extends Model {
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function user() {
-        return $this->belongsTo(\App\User::class);
-    }
-
-    /**
-     * Get employer instance
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function employer() {
-        return $this->belongsTo(\App\User::class);
+    public function project() {
+        return $this->belongsTo(Project::class);
     }
 
     /**
@@ -60,7 +51,25 @@ class Analytic extends Model {
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function device() {
-        return $this->belongsTo(\App\Device::class);
+        return $this->belongsTo(Device::class);
+    }
+
+    /**
+     * Get user instance
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get employer instance
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function employer() {
+        return $this->belongsTo(User::class);
     }
 
 }
