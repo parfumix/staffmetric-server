@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\AnalyticsController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,13 @@ use App\Http\Controllers\API\AnalyticsController;
 Route::post('/device/auth', [DeviceController::class, 'login']);
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
+
+    Route::get('/user', function() {
+        return auth()->user();
+    });
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
     // adding device routes
     Route::post('/devices/create', [DeviceController::class, 'create']);
 

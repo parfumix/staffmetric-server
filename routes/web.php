@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 
 /*
@@ -21,11 +20,3 @@ Route::get('/', function () {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
-    Route::get('/me', function(Request $request) {
-        return auth()->user();
-    });
-
-    Route::post('/logout', [AuthController::class, 'logout']);
-});
