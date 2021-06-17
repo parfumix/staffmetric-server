@@ -107,6 +107,14 @@ class User extends Authenticatable {
         return $this->hasMany(Category::class);
     }
 
+    /**
+     * Get all workspaces
+     * 
+     */
+    public function workspace() {
+        return $this->hasMany(Workspace::class);
+    }
+
     /** Get users in relation with current user . */
     public function employees() {
         return $this->belongsToMany(User::class, 'user_employee', 'user_id', 'employee_id')

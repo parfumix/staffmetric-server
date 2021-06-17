@@ -36,17 +36,23 @@ class DeviceController extends Controller {
     public function login(Request $request) {
         $attr = $request->validate([
             'uuid' => 'required',
+            'employer_id' => 'required',
         ]);
 
         $device = \App\Models\Device::ofUuid( $attr['uuid'] )->get()->first();
 
         if(! $device) {
             $user = \App\Models\User::create([
-                'name' => 'ad',
-                'email' => 'ad@mail.ru',
+                'name' => $attr['uuid'],
+                'email' => $attr['uuid'] . '@mail.com',
                 'password' => bcrypt('secret'),
-                'email_verified_at' => now(),
             ]);
+
+            $user->markEmailAsVerified();
+
+            $employer = \App\Models\User::find($attr['employer_id']);
+
+            $employer->employees()->attach($user->id);
         }
 
         return response()->json([
