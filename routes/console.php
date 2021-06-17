@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 
@@ -15,57 +14,17 @@ use Carbon\Carbon;
 |
 */
 
-if(! function_exists('calculate_top_apps')) {
-    function calculate_top_apps($user, $category_id, $apps = [], Carbon $start_at, Carbon $end_at, $last_index_id=null) {
-        $query = $user->activities()
-            ->addSelect([\DB::raw("'{$category_id}' as provider")])
-            ->addSelect(['id', 'app', 'duration'])
-            ->whereDate('activities.start_at', '>=', $start_at->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_at->format('Y-m-d'));
-
-        if($last_index_id) {
-            $query->where('activities.id', '>', $last_index_id);
-        }
-
-        if(count($apps)) {
-            $query->whereNotNull('activities.full_url');
-            $query->where(function ($query) use($apps) {
-                foreach ($apps as $app) {
-                    $query->orWhere('app', 'like', '%' . $app . '%');
-                }
-            });
-        }
-
-        $query->groupBy('id')
-            ->orderBy('id', 'asc');
-
-        $data = $query->get();
-
-        $last_item = $data->last();
-
-        $grouped_data = $data->groupBy('app')->map(function ($values) {
-            return $values->sum('duration');
-        });
-
-        if ($grouped_data->count() > 0) {
-            $counter = 0;
-            foreach ($grouped_data as $app => $duration) {
-                $counter++;
-                $user->topApps()->create(['app' => $app, 'duration' => $duration, 'category_id' => $category_id, 'last_index' => $counter == $grouped_data->count() ? $last_item->id : null]);
-            }
-        }
-
-        return $data;
-    }
-}
+//TODO adding func to adding apps to app by employeer, in order to set category for each app
 
 Artisan::command('staffmetric:top_apps', function () {
     $this->line('---------------- started at ' . now()->format('Y-m-d H:i:s') . ' ----------------');
 
     $users = \App\Models\User::whereNotNull('email_verified_at')->get();
-    $categories = \App\Models\Category::all()->pluck('title', 'id');
     $this->info('Users to be processed: ' . count($users));
     $this->info("");
+
+    $onlySpecificProviders = [];
+    $data_to_limit_per_category = 7;
 
     foreach ($users as $user) {
         $employer = $user->employers()->first();
@@ -89,21 +48,91 @@ Artisan::command('staffmetric:top_apps', function () {
 
         $reportsService = app(\App\Services\ReportsService::class);
 
-        $apps_providers = $reportsService->getAppsByUser($employer);
+        // get current last_index
+        $last_index = $user->topApps()
+            ->whereNotNull('last_index')
+            ->where('user_id', $user->id)
+            ->orderBy('id', 'desc')
+            ->first();
 
-        foreach ($apps_providers as $category_id => $apps) {
-            $last_index =  $user->topApps()
-                ->whereNotNull('last_index')
-                ->where('category_id', $category_id)
-                ->orderBy('id', 'desc')
-                ->first();
+        $last_index_id = $last_index ? $last_index->last_index : null;
 
-            $last_index_id = $last_index ? $last_index->last_index : null;
+        $this->info(sprintf('Fetching activities for user "%s"', $user->name));
 
-            $this->info(sprintf('Fetching activities for category "%s"', $categories[$category_id]));
-            $data = calculate_top_apps($user, $category_id, $apps->pluck('name'), now(), now(), $last_index_id);
-            $this->info(sprintf(' ----- Data to insert %s', $data->count()));
+        $query = $user->activities()
+            ->addSelect(['activities.id', 'app', 'full_url']);
+
+        $query = $reportsService->categorize($query, $employer->id);
+    
+        // exclude null apps and duration 0
+        $query->whereNotNull('app')
+            ->where('duration', '>', 0);
+
+        // select from sepcific index
+        if($last_index_id) {
+            $query->where('activities.id', '>', $last_index_id);
         }
+
+        // if we want to calculate top apps for only specific providers
+        if(count($onlySpecificProviders)) {
+            $query->whereNotNull('activities.full_url');
+            $query->where(function ($query) use($onlySpecificProviders) {
+                foreach ($onlySpecificProviders as $app) {
+                    $query->orWhere('app', 'like', '%' . $app . '%');
+                }
+            });
+        }
+
+        // group by activities id
+        $query->groupBy('activities.id')
+            ->orderBy('activities.id', 'asc');
+
+        $data = $query->get();
+
+        // get last item in order to register last_index
+        $last_item = $data->last();
+
+        $handleInsert = function($categoryId, $appName, $apps, $last_index) use($user) {
+            $user->topApps()->create([
+                'project_id' => null, 
+                'user_id' => $user->id, 
+                'category_id' => $categoryId ? $categoryId : null, 
+                'app' => $appName, 
+                'duration' => $apps->sum('duration'), 
+                'last_index' => $last_index
+            ]);
+        };
+
+        $data->groupBy('category_id')->each(function($items, $groupByCategoryId) use($handleInsert, $data_to_limit_per_category, $last_item) {
+
+            // filter apps that have url
+            $groupped_apps = collect($items->sortBy('duration'))->reject(function($value) {
+                return !empty($value->full_url) && empty($value->app);
+            })->groupBy('app')->sortByDesc(function($values) {
+                return $values->sum('duration');
+            })->take($data_to_limit_per_category);
+
+            // filter apps that full_url is null
+            $groupped_urls = collect($items->sortBy('duration'))->reject(function($value) {
+                return empty($value->full_url);
+            })->groupBy('full_url')->sortByDesc(function($values) {
+                return $values->sum('duration');
+            })->take($data_to_limit_per_category);
+
+            $counter = 0;
+            $groupped_apps->each(function ($apps, $appName) use($groupByCategoryId, $handleInsert, &$counter, $last_item, $groupped_apps) {
+                $counter++;
+                $handleInsert($groupByCategoryId, $appName, $apps, $counter == count($groupped_apps) ? $last_item->id : null);
+            });
+
+            $counter = 0;
+            $groupped_urls->each(function ($urls, $url) use($groupByCategoryId, $handleInsert, &$counter, $last_item, $groupped_urls) {
+                $counter++;
+                $handleInsert($groupByCategoryId, $url, $urls, $counter == count($groupped_urls) ? $last_item->id : null);
+            });
+        });
+        
+        $this->info(sprintf(' ----- Data to insert %s', $data->count()));
     }
 
     $this->info('');
