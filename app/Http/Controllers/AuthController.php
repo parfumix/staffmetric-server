@@ -21,11 +21,13 @@ class AuthController extends Controller {
             'email' => $attr['email'],
         ]);
 
+        if (!Auth::attempt($user)) {
+            return $this->error('Credentials not match', 401);
+        }
+
         return response()->json([
-            'data' => [
-                'token' =>  $user->createToken('API Token')->plainTextToken,
-            ]
-		]);
+            'success' => true
+        ]);
     }
 
     public function login(Request $request) {
@@ -44,7 +46,7 @@ class AuthController extends Controller {
     }
 
     public function logout() {
-        auth()->user()->tokens()->delete();
+        \Auth::guard('web')->logout();
 
         return [
             'message' => 'Tokens Revoked',

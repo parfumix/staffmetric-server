@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\AnalyticsController;
-use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,8 +25,6 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
         return auth()->user();
     });
 
-    Route::post('/logout', [AuthController::class, 'logout']);
-
     // adding device routes
     Route::post('/devices/create', [DeviceController::class, 'create']);
 
@@ -36,5 +33,7 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
     // adding analytics reports
     Route::get('analytics/productivity/{user?}', [AnalyticsController::class, 'productivity']);
-    Route::get('analytics/burnout/{user?}', [AnalyticsController::class, 'burnout']);
+    Route::get('analytics/employees/{user?}', [AnalyticsController::class, 'employees']);
+    Route::get('analytics/topApps/{user?}', [AnalyticsController::class, 'topApps']);
+    Route::get('analytics/topCategories/{user?}', [AnalyticsController::class, 'topCategories']);
 });

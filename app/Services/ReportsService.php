@@ -679,23 +679,25 @@ class ReportsService {
     // Top Apps
     //-----------------------------------------------------
 
-    public function getTopAnalytics(array $employees, Carbon $start, Carbon $end, Category $category = null) {
+    public function getTopAnalytics(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
         $query = \App\Models\TopApp::whereIn('top_apps.user_id', $employees)
-            ->addSelect([
-                'app',
-                \DB::raw("sum(duration) as duration"),
-            ])
-            ->whereDate('top_apps.created_at', '>=', $start->format('Y-m-d'))
-            ->whereDate('top_apps.created_at', '<=', $end->format('Y-m-d'))
-            ->leftJoin('apps', 'apps.name', '=', 'top_apps.app')
-            ->groupBy(['app'])
-            ->orderBy('top_apps.duration', 'desc');
+            ->addSelect(['app', \DB::raw("sum(duration) as duration")])
+            ->leftJoin('apps', 'apps.name', '=', 'top_apps.app');
 
         if($category) {
             $query->where('top_apps.category_id', $category->id);
         }
 
-        $query->limit(4);
+        if( $start ) {
+            $query->whereDate('top_apps.created_at', '>=', $start->format('Y-m-d'));
+        }
+
+        if( $end ) {
+            $query->whereDate('top_apps.created_at', '<=', $end->format('Y-m-d'));
+        }
+        
+        $query->groupBy(['app'])
+            ->orderBy('top_apps.duration', 'desc');
 
         return $query->get();
     }

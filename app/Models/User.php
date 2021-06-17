@@ -90,9 +90,25 @@ class User extends Authenticatable {
     public function profile() {
         return $this->belongsTo(Profile::class);
     }
+    
+    /**
+     * My apps
+     */
+    public function myApps() {
+        return $this->hasMany(MyApp::class);
+    }
 
-      /** Get users in relation with current user . */
-      public function employees() {
+    /**
+     * Get user categories .
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function categories() {
+        return $this->hasMany(Category::class);
+    }
+
+    /** Get users in relation with current user . */
+    public function employees() {
         return $this->belongsToMany(User::class, 'user_employee', 'user_id', 'employee_id')
             ->using(UserEmployee::class)
             ->withPivot(['id', 'status', 'name', 'daily_reports', 'weekly_reports', 'monthly_reports', 'send_a_copy_to_employee', 'disabled'])

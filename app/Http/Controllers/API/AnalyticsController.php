@@ -93,15 +93,11 @@ class AnalyticsController extends Controller {
 
     }
 
-    public function popularApps(Request $request) {
+    public function topApps(Request $request) {
 
     }
 
-    public function popularCategories(Request $request) {
+    public function topCategories(Request $request) {
 
-    }
-
-    public function burnout(Request $request) {
-        //
     }
 }
