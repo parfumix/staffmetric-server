@@ -15,7 +15,7 @@ class CreateTopAppsTable extends Migration {
             $table->id();
             $table->bigInteger('project_id')->unsigned()->nullable()->default(null);
             $table->bigInteger('user_id')->unsigned();
-            $table->bigInteger('category_id')->unsigned();
+            $table->bigInteger('category_id')->unsigned()->nullable()->default(null);
             $table->integer('last_index')->unsigned()->nullable()->default(null);
             $table->string('app');
             $table->integer('duration')->nullable()->default(null);

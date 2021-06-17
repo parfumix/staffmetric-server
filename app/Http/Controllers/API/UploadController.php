@@ -13,8 +13,7 @@ class UploadController extends Controller {
         foreach ($data as $item) {
             $request->user()->activities()->create([
                 'device_id' => $device->id,
-                'app' => $item['app'],
-                'full_url' => $item['url'],
+                'app' =>  !empty($item['url']) ? $item['url'] : $item['app'],
                 'duration' => $item['duration'],
                 'start_at' => $item['start_at'],
                 'end_at' => $item['end_at']

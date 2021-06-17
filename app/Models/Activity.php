@@ -9,7 +9,7 @@ class Activity extends Model {
 
     use HasFactory;
 
-    protected $fillable = ['project_id', 'device_id', 'user_id', 'category_id', 'app', 'full_url', 'duration', 'start_at', 'end_at'];
+    protected $fillable = ['project_id', 'device_id', 'user_id', 'category_id', 'app', 'duration', 'start_at', 'end_at'];
 
     public $timestamps = true;
 
@@ -72,7 +72,7 @@ class Activity extends Model {
      * @return bool
      */
     public function isApp() {
-        return empty($this->full_url);
+        return empty($this->app);
     }
 
     /**

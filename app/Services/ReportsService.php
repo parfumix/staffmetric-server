@@ -148,7 +148,7 @@ class ReportsService {
         $query = \App\Models\Activity::with(['device', 'user'])
             ->whereIn('activities.user_id', $employees);
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
@@ -175,7 +175,7 @@ class ReportsService {
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
@@ -197,7 +197,7 @@ class ReportsService {
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
@@ -216,7 +216,7 @@ class ReportsService {
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
@@ -239,7 +239,7 @@ class ReportsService {
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
@@ -262,7 +262,7 @@ class ReportsService {
             ? $device->activities()
             : \App\Models\User::findOrFail($employee_id)->activities();
 
-        $query->addSelect(['app', 'full_url']);
+        $query->addSelect(['app']);
 
         $query = $this->categorize($query, $employer_id);
 
