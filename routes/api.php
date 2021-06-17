@@ -34,6 +34,6 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     // adding analytics reports
     Route::get('analytics/productivity/{user?}', [AnalyticsController::class, 'productivity']);
     Route::get('analytics/employees/{user?}', [AnalyticsController::class, 'employees']);
-    Route::get('analytics/topApps/{user?}', [AnalyticsController::class, 'topApps']);
-    Route::get('analytics/topCategories/{user?}', [AnalyticsController::class, 'topCategories']);
+    Route::get('analytics/top-apps/{user?}', [AnalyticsController::class, 'topApps']);
+    Route::get('analytics/top-categories/{user?}', [AnalyticsController::class, 'topCategories']);
 });
