@@ -11,17 +11,19 @@ class ReportsService {
     //todo when user change app category flush all cache.
     //todo or when category change productivity
 
-    protected function categorize($query, $employer_id = null, $drop_deleted = true) {
+    public function categorize($query, $employer_id = null, $drop_deleted = true) {
         $query->addSelect([
             'my_apps.id as my_app_id',
             'my_apps.deleted_at as deleted_at',
             'users.name as user_name',
             'users.id as user_id',
-            \DB::raw('dayname(activities.start_at) as dayname'),
+
             \DB::raw('hour(activities.start_at) as hour'),
-            \DB::raw('month(activities.start_at) as month'),
+            \DB::raw('dayname(activities.start_at) as dayname'),
             \DB::raw('week(activities.start_at) as week'),
+            \DB::raw('month(activities.start_at) as month'),
             \DB::raw('date_format(activities.start_at, "%Y-%m-%d") as date'),
+
             \DB::raw("sum(activities.duration) as duration"),
         ]);
 
@@ -120,14 +122,6 @@ class ReportsService {
 
         return $query;
     }
-
-
-    public function getCategorizedSql(\App\Models\User $user) {
-        $query = $user->activities();
-
-        return $this->categorize($query);
-    }
-
 
     //-----------------------------------------------------
     // Apps
@@ -679,7 +673,7 @@ class ReportsService {
     // Top Apps
     //-----------------------------------------------------
 
-    public function getTopAnalytics(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+    public function getTopAppsAnalytics(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
         $query = \App\Models\TopApp::whereIn('top_apps.user_id', $employees)
             ->addSelect(['app', \DB::raw("sum(duration) as duration")])
             ->leftJoin('apps', 'apps.name', '=', 'top_apps.app');

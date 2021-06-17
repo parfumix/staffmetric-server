@@ -16,7 +16,6 @@ class TopApp extends Model {
     public $timestamps = true;
 
     public $casts = [
-        'last_index' => 'string',
         'app' => 'string',
         'duration' => 'integer',
     ];
