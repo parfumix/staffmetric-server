@@ -22,6 +22,7 @@ class ReportsService {
             \DB::raw('dayname(activities.start_at) as dayname'),
             \DB::raw('week(activities.start_at) as week'),
             \DB::raw('month(activities.start_at) as month'),
+            
             \DB::raw('date_format(activities.start_at, "%Y-%m-%d") as date'),
 
             \DB::raw("sum(activities.duration) as duration"),
@@ -673,10 +674,10 @@ class ReportsService {
     // Top Apps
     //-----------------------------------------------------
 
-    public function getTopAppsAnalytics(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+    public function getQueryTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
         $query = \App\Models\TopApp::whereIn('top_apps.user_id', $employees)
-            ->addSelect(['app', \DB::raw("sum(duration) as duration")])
-            ->leftJoin('apps', 'apps.name', '=', 'top_apps.app');
+            ->addSelect(['app', 'categories.name', \DB::raw("sum(duration) as duration")])
+            ->leftJoin('categories', 'categories.id as category_id', 'categories.name as category_name', '=', 'top_apps.category_id');
 
         if($category) {
             $query->where('top_apps.category_id', $category->id);
@@ -690,10 +691,21 @@ class ReportsService {
             $query->whereDate('top_apps.created_at', '<=', $end->format('Y-m-d'));
         }
         
-        $query->groupBy(['app'])
-            ->orderBy('top_apps.duration', 'desc');
+        return $query;
+    }
 
-        return $query->get();
+    public function getTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+        return $this->getQueryTopApps($employees, $start, $end, $category)
+            ->groupBy(['app'])
+            ->orderBy('top_apps.duration', 'desc')
+            ->get();
+    }
+
+    public function getTopCategories(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+        return $this->getQueryTopApps($employees, $start, $end, $category)
+            ->groupBy(['category_id'])
+            ->orderBy('top_apps.duration', 'desc')
+            ->get();
     }
 
     public function getAppsByUser(\App\Models\User $user, $group_by_category = true) {

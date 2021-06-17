@@ -90,14 +90,60 @@ class AnalyticsController extends Controller {
     }
 
     public function employees(Request $request) {
-
+        //
     }
 
     public function topApps(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date_format:"Y-m-d"',
+            'groupBy' => 'nullable'
+        ]);
 
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of year
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees;
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $data = $reportsService->getTopApps(
+            $employee_ids->keys()->toArray(), $start_at, $end_at
+        );
+
+        return response()->json([
+            'data' => $data
+        ]);
     }
 
     public function topCategories(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date_format:"Y-m-d"',
+            'groupBy' => 'nullable'
+        ]);
 
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of year
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees;
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $data = $reportsService->getTopCategories(
+            $employee_ids->keys()->toArray(), $start_at, $end_at
+        );
+
+        return response()->json([
+            'data' => $data
+        ]);
     }
 }
