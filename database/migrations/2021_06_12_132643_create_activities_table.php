@@ -19,6 +19,7 @@ class CreateActivitiesTable extends Migration {
             $table->bigInteger('user_id')->unsigned();
             $table->bigInteger('category_id')->unsigned()->nullable()->default(null);
             $table->string('app')->nullable()->default(null);
+            $table->boolean('is_url')->default(null);
             $table->integer('duration')->nullable()->default(null);
             $table->dateTime('start_at');
             $table->dateTime('end_at');

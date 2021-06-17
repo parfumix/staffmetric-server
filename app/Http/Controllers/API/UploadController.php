@@ -14,6 +14,7 @@ class UploadController extends Controller {
             $request->user()->activities()->create([
                 'device_id' => $device->id,
                 'app' =>  !empty($item['url']) ? $item['url'] : $item['app'],
+                'is_url' => !empty($item['url']) ? true : false,
                 'duration' => $item['duration'],
                 'start_at' => $item['start_at'],
                 'end_at' => $item['end_at']

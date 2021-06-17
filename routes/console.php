@@ -184,7 +184,7 @@ if(! function_exists('calculate_analytics')) {
 
         // FETCH USER WEB TIME
         $user_web_time = $reportsService->getEmployeeAppTotalTime(
-            $user->id, $employer_local_time, null, true, $last_index_id
+            $user->id, $employer_local_time, null, true, $last_index_id,
         )->pluck('duration', 'project_id');
 
         // FETCH PRODUCTIVITY TIME

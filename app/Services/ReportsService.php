@@ -281,7 +281,6 @@ class ReportsService {
     }
 
 
-
     //-----------------------------------------------------
     // Categories
     //-----------------------------------------------------
@@ -511,31 +510,6 @@ class ReportsService {
         return $query->get();
     }
 
-    public function getByProductivity($employee_id, $employer_id = null, Carbon $date = null, $device = null, $perPage = null, $last_activity_index = null) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['activities.project_id']);
-
-        if( $last_activity_index ) {
-            $query->where('activities.id', '>', $last_activity_index);
-        }
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['activities.project_id', 'productivity']);
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
     public function getDailyProductivity($employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
         $query = $device
             ? $device->activities()
@@ -616,6 +590,109 @@ class ReportsService {
             ? $query->paginate($perPage)
             : $query->get();
     }
+
+
+    //-----------------------------------------------------
+    // CONSOLE
+    //-----------------------------------------------------
+
+    public function getByProductivity($employee_id, $employer_id = null, Carbon $date = null, $device = null, $perPage = null, $last_activity_index = null) {
+        $query = $device
+            ? $device->activities()
+            : \App\Models\User::findOrFail($employee_id)->activities();
+
+        $query->addSelect(['activities.project_id']);
+
+        if( $last_activity_index ) {
+            $query->where('activities.id', '>', $last_activity_index);
+        }
+
+        $query = $this->categorize($query, $employer_id);
+
+        if(! is_null($date)) {
+            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
+                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
+        }
+
+        $query->groupBy(['activities.project_id', 'productivity']);
+
+        return $perPage
+            ? $query->paginate($perPage)
+            : $query->get();
+    }
+
+
+    public function getEmployeeAppTotalTime($employee_id, Carbon $date = null, Carbon $end = null, $only_urls = false, $last_activity_index = null) {
+        $query = \App\Models\User::findOrFail($employee_id)->activities();
+
+        $query->addSelect([
+            \DB::raw("activities.project_id as project_id"),
+            \DB::raw("activities.is_url as is_url"),
+        ]);
+
+        if ($last_activity_index) {
+            $query->where('activities.id', '>', $last_activity_index);
+        }
+
+        if (!is_null($date)) {
+            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
+
+            if (is_null($end)) {
+                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
+            }
+        }
+
+        if (!is_null($end)) {
+            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
+        }
+
+        if($only_urls) {
+            $query->where('activities.is_url', 1);
+        } else {
+            $query->where('activities.is_url', 0);
+        }
+
+        $query->groupBy(['activities.project_id']);
+
+        return $query->get();
+    }
+
+    public function getEmployeeProviderTotalTime($employee_id, $providers, Carbon $date = null, Carbon $end = null, $last_activity_index = null) {
+        $query = \App\Models\User::findOrFail($employee_id)->activities();
+
+        $query->addSelect([
+            \DB::raw("activities.project_id as project_id"),
+            \DB::raw("sum(activities.duration) as duration"),
+        ]);
+
+        if ($last_activity_index) {
+            $query->where('activities.id', '>', $last_activity_index);
+        }
+
+        if (!is_null($date)) {
+            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
+
+            if (is_null($end)) {
+                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
+            }
+        }
+        if (!is_null($end)) {
+            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
+        }
+
+        $query->whereNotNull('activities.app');
+
+        $query->where(function ($query) use ($providers) {
+            foreach ($providers as $provider) {
+                $query->orWhere('app', 'like', '%' . $provider . '%');
+            }
+        });
+
+        $query->groupBy(['activities.project_id']);
+
+        return $query->get();
+    }
+
 
 
     //-----------------------------------------------------
