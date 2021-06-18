@@ -35,15 +35,19 @@ class DeviceController extends Controller {
     // authenticate user by UUID
     public function login(Request $request) {
         $attr = $request->validate([
+            'token' => 'nullable',
             'uuid' => 'required',
+            'os' => 'required',
             'employer_id' => 'required',
         ]);
+
+        //TODO if present token id than we should authenticate by token ID
 
         $device = \App\Models\Device::ofUuid( $attr['uuid'] )->get()->first();
 
         if(! $device) {
             $user = \App\Models\User::create([
-                'name' => $attr['uuid'],
+                'name' => $attr['os'],
                 'email' => $attr['uuid'] . '@mail.com',
                 'password' => bcrypt('secret'),
             ]);
@@ -56,7 +60,7 @@ class DeviceController extends Controller {
         }
 
         return response()->json([
-            'token' => $user->createToken('DEVICE Token')->plainTextToken,
+            'token' => $user->createToken('Device Token')->plainTextToken,
 		]);
     }
 }

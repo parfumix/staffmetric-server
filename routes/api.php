@@ -5,6 +5,9 @@ use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\SettingsController;
+use App\Http\Controllers\API\InviteController;
+use App\Http\Controllers\API\CategoriesController;
+use App\Http\Controllers\API\ApplicationsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +41,10 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     Route::get('analytics/top-apps/{user?}', [AnalyticsController::class, 'topApps']);
     Route::get('analytics/top-categories/{user?}', [AnalyticsController::class, 'topCategories']);
 
-    // adding settings
-    Route::get('settings/applications', [SettingsController::class, 'applications']);
-    Route::get('settings/categories', [SettingsController::class, 'catgories']);
+    // adding invite route
+    Route::get('invite', [InviteController::class, 'invite']);
+
+    // adding categories / applications
+    Route::apiResource('categories', CategoriesController::class);
+    Route::apiResource('applications', ApplicationsController::class);
 });
