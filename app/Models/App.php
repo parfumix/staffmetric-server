@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Table is used for collecto general and user(employer) apps 
+ *  when reportsService analyzie productivity it checks app category productivity by using this table
+ * 
+ */
+
 class App extends Model {
     use HasFactory;
 

@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Table is used for collects general and user(employer) categories 
+ * 
+ */
+
 class Category extends Model {
     
     use HasFactory;

@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Table is used for employee-employer productivity
+ * 
+ */
+
 class EmpployeeApp extends Model {
     use HasFactory;
 
