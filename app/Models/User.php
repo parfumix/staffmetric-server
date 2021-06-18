@@ -132,6 +132,15 @@ class User extends Authenticatable {
     }
     
     /**
+     * Get user apps
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function apps() {
+        return $this->hasMany(App::class);
+    }
+
+    /**
      * Get user top apps
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

@@ -14,8 +14,6 @@ use Carbon\Carbon;
 |
 */
 
-//TODO adding func to adding apps to app by employeer, in order to set category for each app
-
 Artisan::command('staffmetric:apps', function () {
     $this->line('---------------- started at ' . now()->format('Y-m-d H:i:s') . ' ----------------');
 
@@ -23,6 +21,50 @@ Artisan::command('staffmetric:apps', function () {
     $this->info('Users to be processed: ' . count($users));
     $this->info("");
 
+    foreach ($users as $user) {
+        $employer = $user->employers()->first();
+
+        $this->info(sprintf('Processing %s', $user->email));
+
+        if(! $employer) {
+            $this->info("Skip, not found any employers\n");
+            continue;
+        }
+
+        if($employer->pivot->isDisabled()) {
+            $this->info("Skip, user is not enabled for current employer\n");
+            continue;
+        }
+
+        if(! $employer->pivot->isAccepted()) {
+            $this->info("Skip, user not accepted invitation\n");
+            continue;
+        }
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        $this->info(sprintf('Fetching apps for user "%s"', $employer->name));
+
+        // get all employer apps
+        $employer_apps = $employer->apps->pluck('name', 'id');
+
+        // get user apps for current day only 30 by number
+        $user_apps = $reportsService->getUserApps( $user->id, $employer_apps->values(), now(), 30 )->pluck('duration', 'app');
+
+        if(! $user_apps->count()) {
+            continue;
+        }
+
+        $category_by_default = \App\Models\Category::where('title', 'General')->first();
+
+        $flat_apps = $user_apps->mapToGroups(function($duration, $app) use($category_by_default) {
+            return [['name' => $app, 'category_id' => $category_by_default->id]];
+        });
+
+        $employer->apps()->createMany($flat_apps->get(0)->toArray());
+
+        $this->info(sprintf(' ----- Data to insert %s', $user_apps->count()));
+    }
 
     $this->info('');
     $this->info('Total users processed: ' .  count($users));
@@ -122,7 +164,6 @@ Artisan::command('staffmetric:top_apps', function () {
             ->groupBy('app')->sortByDesc(function($values) {
                 return $values->sum('duration');
             })->take($data_to_limit_per_category);
-
 
             $counter = 0;
             $groupped_apps->each(function ($apps, $appName) use($groupByCategoryId, $handleInsert, &$counter, $last_item, $groupped_apps) {

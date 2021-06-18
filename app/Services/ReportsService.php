@@ -129,6 +129,34 @@ class ReportsService {
     // CONSOLE
     //-----------------------------------------------------
 
+    public function getUserApps($employee_id, $apps_to_exclude = [], Carbon $date = null, $limit = null) {
+        $query = \App\Models\User::findOrFail($employee_id)->activities();
+
+        $query->addSelect([
+            \DB::raw("activities.app as app"),
+            \DB::raw("sum(activities.duration) as duration"),
+        ]);
+       
+        $query->whereNotNull('app');
+
+        $query->whereNotIn('app', $apps_to_exclude);
+
+        if(! is_null($date)) {
+            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
+                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
+        }
+
+        $query->orderBy('duration', 'desc');
+
+        $query->groupBy(['app']);
+
+        if($limit) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
+    }
+
     public function getByProductivity($employee_id, $employer_id = null, Carbon $date = null, $device = null, $perPage = null, $last_activity_index = null) {
         $query = $device
             ? $device->activities()
@@ -186,7 +214,6 @@ class ReportsService {
 
         return $query->get();
     }
-
 
     public function getEmployeeAppTotalTime($employee_id, Carbon $date = null, Carbon $end = null, $only_urls = null, $providers = [], $last_activity_index = null) {
         $query = \App\Models\User::findOrFail($employee_id)->activities();
