@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Application;
+use App\Models\App;
 use Illuminate\Http\Request;
 
 class ApplicationsController extends Controller {
@@ -12,8 +14,11 @@ class ApplicationsController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function index() {
-        //
+    public function index(Request $request) {
+        $user_applications = $request->user()->apps;
+        $globl_applications = \App\Models\App::whereNotIn('name', $user_applications->pluck('name')->values())->get();
+
+        return Application::collection( collect($globl_applications)->merge($user_applications) );
     }
 
     /**
@@ -23,7 +28,27 @@ class ApplicationsController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request) {
-        //
+        $attr = $request->validate([
+            'application_id' => 'required',
+            'category_id' => 'required',
+        ]);
+
+        $application = \App\Models\App::find($attr['id']);
+        $user_app = $request->user()->apps()->where('id', $attr['application_id'])->first();
+
+        if(! $user_app) {
+            $user_app = \Auth::user()->apps()->create(new \App\Models\App([
+                'title' => $application->title,
+                'productivity' => $application->productivity,
+            ]));
+        } else {
+            \Auth::user()->apps()->updateOrCreate(
+                ['id' => $attr['application_id']],
+                ['productivity' => $attr['category_id']],
+            );
+        }
+
+        return new Application($user_app);
     }
 
     /**
