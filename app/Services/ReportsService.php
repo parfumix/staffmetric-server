@@ -124,473 +124,6 @@ class ReportsService {
         return $query;
     }
 
-    //-----------------------------------------------------
-    // Apps
-    //-----------------------------------------------------
-
-    public function getReportsAppsGroupedBy( $groupBy, $employee_id = null, $employer_id = null, Carbon $date = null, $device = null, $perPage = null ) {
-        if( $groupBy == 'daily' ) {
-            $items = $this->getDailyReportsByApps($employee_id, $employer_id, $date, $device, $perPage)->groupBy('hour');
-        } elseif ( $groupBy == 'weekly' ) {
-            $items = $this->getWeeklyReportsByApps($employee_id, $employer_id, $date, $device, $perPage)->groupBy('date');
-        } elseif( $groupBy == 'monthly' ) {
-            $items = $this->getMonthlyReportsByApps($employee_id, $employer_id, $date, $device, $perPage)->groupBy('week');
-        } elseif( $groupBy == 'yearly' ) {
-            $items = $this->getYearlyReportsByApps($employee_id, $employer_id, $date, $device, $perPage)->groupBy('month');
-        } else {
-            $items = $this->getReportsByApps($employee_id, $employer_id, $date, $device, $perPage);
-        }
-
-        return $items;
-    }
-
-    public function getEmployeesReportsByApps($employer_id, array $employees, Carbon $date = null, Carbon $end_at = null) {
-        $query = \App\Models\Activity::with(['device', 'user'])
-            ->whereIn('activities.user_id', $employees);
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
-
-            if( is_null($end_at) ) {
-                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-            }
-        }
-
-        if( $end_at ) {
-            $query->whereDate('activities.end_at', '<=', $end_at->format('Y-m-d'));
-        }
-
-        $query->groupBy(['app', 'activities.user_id'])
-            ->orderBy('duration', 'desc');
-
-        return $query->get();
-    }
-
-    public function getReportsByApps( $employee_id, $employer_id = null, Carbon $date = null, \App\Models\Device $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy('app')
-            ->orderBy('duration', 'desc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getDailyReportsByApps( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'))
-            ->groupBy([\DB::raw('hour(activities.start_at)'), 'app'])
-            ->orderBy('hour', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getWeeklyReportsByApps( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_week_date = $date->copy()->startOfWeek();
-        $end_of_week_date = $date->copy()->endOfWeek();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_week_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_week_date->format('Y-m-d'));
-
-        $query->groupBy(['date', 'app'])
-            ->orderBy('date', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getMonthlyReportsByApps( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_month_date = $date->copy()->startOfMonth();
-        $end_of_month_date = $date->copy()->endOfMonth();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_month_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_month_date->format('Y-m-d'));
-
-        $query->groupBy(['week', 'app'])
-            ->orderBy('week', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getYearlyReportsByApps( $employee_id, $employer_id, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect(['app']);
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_year_date = $date->copy()->startOfYear();
-        $end_of_year_date = $date->copy()->endOfYear();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_year_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_year_date->format('Y-m-d'));
-
-        $query->groupBy(['month', 'app'])
-            ->orderBy('month', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-
-    //-----------------------------------------------------
-    // Categories
-    //-----------------------------------------------------
-
-    public function getReportsCategoriesGroupedBy( $groupBy, $employee_id, $employer_id = null, Carbon $date = null, $device = null, $perPage = null ) {
-        if( $groupBy == 'daily' ) {
-            $items = $this->getDailyReportsByCategories($employee_id, $employer_id, $date, $device, $perPage)->groupBy('hour');
-        } elseif ( $groupBy == 'weekly' ) {
-            $items = $this->getWeeklyReportsByCategories($employee_id, $employer_id, $date, $device, $perPage)->groupBy('date');
-        } elseif( $groupBy == 'monthly' ) {
-            $items = $this->getMonthlyReportsByCategories($employee_id, $employer_id, $date, $device, $perPage)->groupBy('week');
-        } elseif( $groupBy == 'yearly' ) {
-            $items = $this->getYearlyReportsByCategories($employee_id, $employer_id, $date, $device, $perPage)->groupBy('month');
-        } else {
-            $items = $this->getReportsByCategories($employee_id, $employer_id, $date, $device, $perPage);
-        }
-
-        return $items;
-    }
-
-    public function getEmployeesReportsByCategories($employer_id, array $employees, Carbon $date = null) {
-        $general_categories = \App\Models\Category::whereNull('user_id')->get();
-
-        $query = \App\Models\Activity::with(['device', 'user'])
-            ->whereIn('activities.user_id', $employees);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['category_id', 'activities.user_id']);
-
-        if( $general_categories->count() ) {
-            $query->havingRaw('category_id in (' . $general_categories->pluck('id')->implode(',') . ')');
-        }
-
-        return $query->get();
-    }
-
-    public function getReportsByCategories( $employee_id, $employer_id = null, Carbon $date = null, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['category_id']);
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getDailyReportsByCategories( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'))
-            ->groupBy(['hour', 'category_id'])
-            ->orderBy('hour', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getWeeklyReportsByCategories( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_week_date = $date->copy()->startOfWeek();
-        $end_of_week_date = $date->copy()->endOfWeek();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_week_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_week_date->format('Y-m-d'));
-
-        $query->groupBy(['date', 'category_id'])
-            ->orderBy('date', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getMonthlyReportsByCategories( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_month_date = $date->copy()->startOfMonth();
-        $end_of_month_date = $date->copy()->endOfMonth();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_month_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_month_date->format('Y-m-d'));
-
-        $query->groupBy(['week', 'category_id'])
-            ->orderBy('week', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getYearlyReportsByCategories( $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_year_date = $date->copy()->startOfYear();
-        $end_of_year_date = $date->copy()->endOfYear();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_year_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_year_date->format('Y-m-d'));
-
-        $query->groupBy(['month', 'category_id'])
-            ->orderBy('month', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-
-
-
-    //-----------------------------------------------------
-    // Productivity
-    //-----------------------------------------------------
-
-    public function getReportsProductivityGroupedBy( $groupBy, $employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        if( $groupBy == 'daily' ) {
-            $data = $this->getDailyProductivity($employee_id, $employer_id, $date, $device, $perPage)->groupBy('hour');
-        } elseif ( $groupBy == 'weekly' ) {
-            $data = $this->getWeeklyProductivity($employee_id, $employer_id, $date, $device, $perPage )->groupBy('date');
-        } elseif( $groupBy == 'monthly' ) {
-            $data = $this->getMonthlyProductivity($employee_id, $employer_id, $date, $device, $perPage)->groupBy('week');
-        } elseif( $groupBy == 'yearly' ) {
-            $data = $this->getYearlyProductivity($employee_id, $employer_id, $date, $device, $perPage)->groupBy('month');
-        } else {
-            $data = $this->getByProductivity($employee_id, $employer_id, $date, $device, $perPage);
-        }
-
-        return $data;
-    }
-
-    public function getEmployeesReportsByProductivity($employer_id, array $employees, Carbon $date = null, Carbon $end_date = null) {
-        $query = \App\Models\Activity::with(['device', 'user'])
-            ->whereIn('activities.user_id', $employees);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
-
-            if( is_null($end_date) ) {
-                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-            }
-        }
-
-        if(! is_null($end_date)) {
-            $query->whereDate('activities.end_at', '<=', $end_date->format('Y-m-d'));
-        }
-
-        $query->groupBy(['productivity', 'activities.user_id'])
-            ->orderBy('duration', 'asc');
-
-        return $query->get();
-    }
-
-
-    public function getEmployeesProductiveReports($employer_id, array $employees, Carbon $date = null) {
-        $query = \App\Models\Activity::with(['device', 'user'])
-            ->whereIn('activities.user_id', $employees);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-                ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-        }
-
-        $query->having('productivity', 'productive');
-
-        $query->groupBy(['month', 'productivity', 'activities.user_id'])
-            ->orderBy('duration', 'asc');
-
-        return $query->get();
-    }
-
-    public function getEmployeesDailyProductivityReports($employer_id, array $employees, Carbon $from = null, Carbon $to = null) {
-        $query = \App\Models\Activity::with(['device', 'user'])
-            ->whereIn('activities.user_id', $employees);
-
-        $query = $this->categorize($query, $employer_id);
-
-        if(! $from)
-            $from = now()->subWeek(1);
-
-        if(! is_null($from))
-            $query->whereDate('activities.start_at', '>=', $from->format('Y-m-d'));
-
-        if(! is_null($to))
-            $query->whereDate('activities.start_at', '<=', $to->format('Y-m-d'));
-
-        $query->groupBy(['date', 'productivity', 'activities.user_id'])
-            ->orderBy('duration', 'asc');
-
-        return $query->get();
-    }
-
-    public function getDailyProductivity($employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-
-        $query->groupBy(['hour', 'productivity'])
-            ->orderBy('hour', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getWeeklyProductivity($employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_week_date = $date->copy()->startOfWeek();
-        $end_of_week_date = $date->copy()->endOfWeek();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_week_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_week_date->format('Y-m-d'));
-
-        $query->groupBy(['date', 'productivity'])
-            ->orderBy('date', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getMonthlyProductivity($employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_month_date = $date->copy()->startOfMonth();
-        $end_of_month_date = $date->copy()->endOfMonth();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_month_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_month_date->format('Y-m-d'));
-
-        $query->groupBy(['week', 'productivity'])
-            ->orderBy('week', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
-    public function getYearlyProductivity($employee_id, $employer_id = null, Carbon $date, $device = null, $perPage = null ) {
-        $query = $device
-            ? $device->activities()
-            : \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query = $this->categorize($query, $employer_id);
-
-        $start_of_year_date = $date->copy()->startOfYear();
-        $end_of_year_date = $date->copy()->endOfYear();
-
-        $query->whereDate('activities.start_at', '>=', $start_of_year_date->format('Y-m-d'))
-            ->whereDate('activities.end_at', '<=', $end_of_year_date->format('Y-m-d'));
-
-        $query->groupBy(['month', 'productivity'])
-            ->orderBy('month', 'asc');
-
-        return $perPage
-            ? $query->paginate($perPage)
-            : $query->get();
-    }
-
 
     //-----------------------------------------------------
     // CONSOLE
@@ -607,6 +140,8 @@ class ReportsService {
             $query->where('activities.id', '>', $last_activity_index);
         }
 
+        $query->whereNotNull('app');
+
         $query = $this->categorize($query, $employer_id);
 
         if(! is_null($date)) {
@@ -621,43 +156,7 @@ class ReportsService {
             : $query->get();
     }
 
-
-    public function getEmployeeAppTotalTime($employee_id, Carbon $date = null, Carbon $end = null, $only_urls = false, $last_activity_index = null) {
-        $query = \App\Models\User::findOrFail($employee_id)->activities();
-
-        $query->addSelect([
-            \DB::raw("activities.project_id as project_id"),
-            \DB::raw("activities.is_url as is_url"),
-        ]);
-
-        if ($last_activity_index) {
-            $query->where('activities.id', '>', $last_activity_index);
-        }
-
-        if (!is_null($date)) {
-            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
-
-            if (is_null($end)) {
-                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
-            }
-        }
-
-        if (!is_null($end)) {
-            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
-        }
-
-        if($only_urls) {
-            $query->where('activities.is_url', 1);
-        } else {
-            $query->where('activities.is_url', 0);
-        }
-
-        $query->groupBy(['activities.project_id']);
-
-        return $query->get();
-    }
-
-    public function getEmployeeProviderTotalTime($employee_id, $providers, Carbon $date = null, Carbon $end = null, $last_activity_index = null) {
+    public function getIdle($employee_id, Carbon $date = null, Carbon $end = null, $last_activity_index = null) {
         $query = \App\Models\User::findOrFail($employee_id)->activities();
 
         $query->addSelect([
@@ -676,11 +175,48 @@ class ReportsService {
                 $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
             }
         }
+
+        if (!is_null($end)) {
+            $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
+        }
+
+        $query->whereNull('activities.app');
+
+        $query->groupBy(['activities.project_id', 'activities.id']);
+
+        return $query->get();
+    }
+
+
+    public function getEmployeeAppTotalTime($employee_id, Carbon $date = null, Carbon $end = null, $only_urls = null, $providers = [], $last_activity_index = null) {
+        $query = \App\Models\User::findOrFail($employee_id)->activities();
+
+        $query->addSelect([
+            \DB::raw("activities.project_id as project_id"),
+            \DB::raw("sum(activities.duration) as duration"),
+        ]);
+
+        if ($last_activity_index) {
+            $query->where('activities.id', '>', $last_activity_index);
+        }
+
+        if (!is_null($date)) {
+            $query->whereDate('activities.start_at', '>=', $date->format('Y-m-d'));
+
+            if (is_null($end)) {
+                $query->whereDate('activities.end_at', '<=', $date->format('Y-m-d'));
+            }
+        }
+
         if (!is_null($end)) {
             $query->whereDate('activities.end_at', '<=', $end->format('Y-m-d'));
         }
 
         $query->whereNotNull('activities.app');
+
+        if(! is_null($only_urls)) {
+            $query->where('activities.is_url', $only_urls);
+        }
 
         $query->where(function ($query) use ($providers) {
             foreach ($providers as $provider) {

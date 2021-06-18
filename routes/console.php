@@ -149,11 +149,41 @@ Artisan::command('staffmetric:uncategorized', function () {
     });
 })->describe('Check for uncategorized apps and sent notification');
 
-if(! function_exists('calculate_analytics')) {
-    function calculate_analytics($user, $employer, $context) {
+Artisan::command('staffmetric:analytics', function () {
+    $users = \App\Models\User::whereNotNull('email_verified_at')
+        ->get();
+
+    $this->line('---------------- started at ' . now()->format('Y-m-d H:i:s') . ' ----------------');
+
+    $this->info('Users to be processed: ' . count($users));
+    $this->info("");
+
+    foreach ($users as $user) {
+        $employer = $user->employers()->first();
+        $this->info(sprintf('Processing %s', $user->email));
+
+        if(! $employer) {
+            $this->info("Skip, not found any employers\n");
+            continue;
+        }
+
+        $this->info("Employee --". json_encode($user->only('id', 'email', 'name')));
+        $this->info("Employer --". json_encode($employer->only('id', 'email', 'name')));
+
+        if($employer->pivot->isDisabled()) {
+            $this->info("Skip, user is not enabled for current employer\n");
+            continue;
+        }
+
+        if(! $employer->pivot->isAccepted()) {
+            $this->info("Skip, user not accepted invitation\n");
+            continue;
+        }
+
         $user_timezone = config('app.timezone');
         $employer_local_time = now($user_timezone);
 
+        //TODO get data from current workspace...
         $user_tracking_days = ['Mon', 'Tue'];
         $user_start_at = 9;
         $user_end_at = 18;
@@ -174,17 +204,25 @@ if(! function_exists('calculate_analytics')) {
             : null;
 
         $apps_providers = $reportsService->getAppsByUser($employer);
-        $email_category = \App\Models\Category::where('title', 'Email')->first();
-        $social_category = \App\Models\Category::where('title', 'Social')->first();
+
+        $email_category = \App\Models\Category::where('title', 'Email')->where(function ($query) use($employer) {
+            return $query->whereNull('user_id')
+                ->orWhere('user_id', $employer->id);
+        })->first();
+
+        $social_category = \App\Models\Category::where('title', 'Social')->where(function ($query) use($employer) {
+            return $query->whereNull('user_id')
+                ->orWhere('user_id', $employer->id);
+        })->first();
 
         // FETCH USER APP TIME
         $user_app_time = $reportsService->getEmployeeAppTotalTime(
-            $user->id, $employer_local_time, null, false, $last_index_id
+            $user->id, $employer_local_time, null, false, [], $last_index_id
         )->pluck('duration', 'project_id');
 
         // FETCH USER WEB TIME
         $user_web_time = $reportsService->getEmployeeAppTotalTime(
-            $user->id, $employer_local_time, null, true, $last_index_id,
+            $user->id, $employer_local_time, null, true, [], $last_index_id,
         )->pluck('duration', 'project_id');
 
         // FETCH PRODUCTIVITY TIME
@@ -195,16 +233,16 @@ if(! function_exists('calculate_analytics')) {
         // FETCH WEB MAIL TIME
         $user_web_mail_time = [];
         if( $email_category ) {
-            $user_web_mail_time = $reportsService->getEmployeeProviderTotalTime(
-                $user->id, $apps_providers[$email_category->id]->pluck('name'), $employer_local_time, null, $last_index_id
+            $user_web_mail_time = $reportsService->getEmployeeAppTotalTime(
+                $user->id, $employer_local_time, null, null, $apps_providers[$email_category->id]->pluck('name'), $last_index_id
             )->pluck('duration', 'project_id');
         }
         
         // FETCH SOCIAL TIME
         $user_web_social_time = [];
         if( $social_category ) {
-            $user_web_social_time = $reportsService->getEmployeeProviderTotalTime(
-                $user->id, $apps_providers[$social_category->id]->pluck('name'), $employer_local_time, null, $last_index_id
+            $user_web_social_time = $reportsService->getEmployeeAppTotalTime(
+                $user->id, $employer_local_time, null, null, $apps_providers[$social_category->id]->pluck('name'), $last_index_id
             )->pluck('duration', 'project_id');
         }
 
@@ -218,6 +256,22 @@ if(! function_exists('calculate_analytics')) {
 
         foreach ($user_web_mail_time as $project_id => $duration) {
             $data_to_insert[$project_id]['email_secs'] = $duration;
+        }
+
+        $user_idle = $reportsService->getIdle($user->id, $employer_local_time, $last_index_id,)
+            ->groupBy('project_id');
+
+        //collect idle data to array
+        foreach ($user_idle as $project_id => $pauses) {
+            $idle_secs = $idle_count = null;
+            foreach ($pauses as $pause) {
+                $idle_secs += $pause['duration'];
+                $idle_count ++;
+            }
+
+            $data_to_insert[$project_id]['idle_secs'] = $idle_secs;
+            $data_to_insert[$project_id]['idle_count'] = $idle_count;
+            $data_to_insert[$project_id]['meetings_secs'] = null;
         }
 
         //collect productivity data to array
@@ -237,12 +291,6 @@ if(! function_exists('calculate_analytics')) {
                 $idle_count = null;
 
                 foreach($reports as $report) {
-
-                    // calculate idle time
-                    if( empty($report['app']) ) {
-                        $idle_secs += $report['duration'];
-                        $idle_count++;
-                    }
 
                     // calculate productivity
                     if($report['productivity'] == 'neutral') {
@@ -280,47 +328,12 @@ if(! function_exists('calculate_analytics')) {
                 ] + $data);
 
                 $analytic->save();
-                $context->info("");
-                $context->info('Inserting data ' . json_encode($analytic->toArray()));
+                $this->info("");
+                $this->info('Inserting data ' . json_encode($analytic->toArray()));
             }
         } else {
-            $context->info("No data to insert.\n");
+            $this->info("No data to insert.\n");
         }
-    }
-}
-
-Artisan::command('staffmetric:analytics', function () {
-    $users = \App\Models\User::whereNotNull('email_verified_at')
-        ->get();
-
-    $this->line('---------------- started at ' . now()->format('Y-m-d H:i:s') . ' ----------------');
-
-    $this->info('Users to be processed: ' . count($users));
-    $this->info("");
-
-    foreach ($users as $user) {
-        $employer = $user->employers()->first();
-        $this->info(sprintf('Processing %s', $user->email));
-
-        if(! $employer) {
-            $this->info("Skip, not found any employers\n");
-            continue;
-        }
-
-        $this->info("Employee --". json_encode($user->only('id', 'email', 'name')));
-        $this->info("Employer --". json_encode($employer->only('id', 'email', 'name')));
-
-        if($employer->pivot->isDisabled()) {
-            $this->info("Skip, user is not enabled for current employer\n");
-            continue;
-        }
-
-        if(! $employer->pivot->isAccepted()) {
-            $this->info("Skip, user not accepted invitation\n");
-            continue;
-        }
-
-        call_user_func_array('calculate_analytics', [$user, $employer, $this]);
     }
 
     $this->info('');
