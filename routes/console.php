@@ -14,6 +14,16 @@ use Carbon\Carbon;
 |
 */
 
+Artisan::command('staffmetric:uncategorized', function () {
+    \App\Models\User::all()->map(function (\App\Models\User $user) {
+        if( $user->canNotify( \App\Models\User::DB_NOTIFY) ) {
+            if( ($topUncategorizedApps = $user->getUserUncategorizedApps(5)) && $topUncategorizedApps->count() ) {
+                $user->notify( new \App\Notifications\UncategorizedApps($topUncategorizedApps) );
+            }
+        }
+    });
+})->describe('Check for uncategorized apps and sent notification');
+
 Artisan::command('staffmetric:apps', function () {
     $this->line('---------------- started at ' . now()->format('Y-m-d H:i:s') . ' ----------------');
 
@@ -179,16 +189,6 @@ Artisan::command('staffmetric:top_apps', function () {
     $this->info('Total users processed: ' .  count($users));
     $this->info("\n\n");
 })->describe('Calculate top apps for each user');
-
-Artisan::command('staffmetric:uncategorized', function () {
-    \App\Models\User::all()->map(function (\App\Models\User $user) {
-        if( $user->canNotify( \App\Models\User::DB_NOTIFY) ) {
-            if( ($topUncategorizedApps = $user->getUserUncategorizedApps(5)) && $topUncategorizedApps->count() ) {
-                $user->notify( new \App\Notifications\UncategorizedApps($topUncategorizedApps) );
-            }
-        }
-    });
-})->describe('Check for uncategorized apps and sent notification');
 
 Artisan::command('staffmetric:analytics', function () {
     $users = \App\Models\User::whereNotNull('email_verified_at')
