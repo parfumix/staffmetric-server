@@ -8,6 +8,7 @@ use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\InviteController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,7 @@ use App\Http\Controllers\API\ApplicationsController;
 */
 
 // authenticate by device uuid
+Route::post('/token/auth', [AuthController::class, 'token']);
 Route::post('/device/auth', [DeviceController::class, 'login']);
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {

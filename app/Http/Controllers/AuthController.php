@@ -45,6 +45,21 @@ class AuthController extends Controller {
         ]);
     }
 
+    public function token(Request $request) {
+        $attr = $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string|min:6',
+        ]);
+
+        if (!Auth::attempt($attr)) {
+            return $this->error('Credentials not match', 401);
+        }
+
+        $token = \Auth::user()->createToken('API TOKEN')->plainTextToken;
+
+        return response()->json(['token' => $token], 200);
+    }
+
     public function logout() {
         \Auth::guard('web')->logout();
 
