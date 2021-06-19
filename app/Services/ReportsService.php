@@ -7,12 +7,9 @@ use \App\Models\Category;
 
 class ReportsService {
 
-    //todo adding cache for past days
-    //todo when user change app category flush all cache.
-    //todo or when category change productivity
-
     public function categorize($query, $employer_id = null, $drop_deleted = true) {
         $query->addSelect([
+            // joined columns
             'my_apps.id as my_app_id',
             'my_apps.deleted_at as deleted_at',
             'users.name as user_name',
@@ -22,7 +19,6 @@ class ReportsService {
             \DB::raw('dayname(activities.start_at) as dayname'),
             \DB::raw('week(activities.start_at) as week'),
             \DB::raw('month(activities.start_at) as month'),
-            
             \DB::raw('date_format(activities.start_at, "%Y-%m-%d") as date'),
 
             \DB::raw("sum(activities.duration) as duration"),
@@ -31,6 +27,7 @@ class ReportsService {
         $query->join('users', 'users.id', '=', 'activities.user_id');
 
         if(! is_null($employer_id)) {
+            // join with employee apps
             $query->leftJoin('employee_apps', function ($join) use($employer_id) {
                 $join->on('employee_apps.name', '=', 'activities.app')
                     ->on('employee_apps.user_id', '=', \DB::raw($employer_id))
@@ -85,7 +82,6 @@ class ReportsService {
                         ->orWhereNull('c.user_id');
                 });
         });
-
 
         $query->leftJoin('apps', function ($join) use($employer_id) {
             $join->on('apps.name', '=', 'activities.app')

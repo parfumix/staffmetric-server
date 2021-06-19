@@ -13,6 +13,7 @@ class UploadController extends Controller {
         $to_insert = [];
         foreach ($data as $item) {
             $to_insert[] = [
+                'user_id' => \Auth::id(),
                 'device_id' => $device->id,
                 'app' =>  $item['app'],
                 'is_url' => $item['is_url'] ? true : false,
@@ -22,7 +23,7 @@ class UploadController extends Controller {
             ];
         }
 
-        $request->user()->activities()->createMany($to_insert);
+        \DB::table('activities')->insert($to_insert);
 
         $device->update(['last_update_at' => now()]);
 
