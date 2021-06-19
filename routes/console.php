@@ -299,7 +299,7 @@ Artisan::command('staffmetric:analytics', function () {
             $data_to_insert[$project_id]['email_secs'] = $duration;
         }
 
-        $user_idle = $reportsService->getIdle($user->id, $employer_local_time, $last_index_id,)
+        $user_idle = $reportsService->getIdle($user->id, $employer_local_time, null, $last_index_id,)
             ->groupBy('project_id');
 
         //collect idle data to array
