@@ -14,6 +14,7 @@
         "laravel/framework": "^8.40",
         "laravel/nova": "*",
         "laravel/sanctum": "^2.11",
+        "laravel/telescope": "^4.5",
         "laravel/tinker": "^2.5",
         "nesbot/carbon": "^2.49",
         "webpatser/laravel-uuid": "^3.0"
