@@ -328,9 +328,6 @@ Artisan::command('staffmetric:analytics', function () {
             foreach ($user_productivity_reports as $project_id => $reports) {
                 $productive_mins = $neutral_mins = $non_productive_mins = null;
 
-                $idle_secs = null;
-                $idle_count = null;
-
                 foreach($reports as $report) {
 
                     // calculate productivity

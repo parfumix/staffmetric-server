@@ -137,6 +137,7 @@ class ReportsService {
             \DB::raw("sum(activities.duration) as duration"),
         ]);
        
+        // exclude idle time
         $query->whereNotNull('app');
 
         $query->whereNotIn('app', $apps_to_exclude);
@@ -168,8 +169,10 @@ class ReportsService {
             $query->where('activities.id', '>', $last_activity_index);
         }
 
+        // exclude idle time
         $query->whereNotNull('app');
 
+        // detect productivity app
         $query = $this->categorize($query, $employer_id);
 
         if(! is_null($date)) {
