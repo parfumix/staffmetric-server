@@ -246,6 +246,7 @@ Artisan::command('staffmetric:analytics', function () {
 
         $apps_providers = $reportsService->getAppsByUser($employer);
 
+        // FETCH CATEGORIES
         $email_category = \App\Models\Category::where('title', 'Email')->where(function ($query) use($employer) {
             return $query->whereNull('user_id')
                 ->orWhere('user_id', $employer->id);
@@ -287,10 +288,23 @@ Artisan::command('staffmetric:analytics', function () {
             )->pluck('duration', 'project_id');
         }
 
+        // FETCH IDLE TIME
+        $user_idle = $reportsService->getIdle($user->id, $employer_local_time, null, $last_index_id,)
+            ->groupBy('project_id');
+
         //INSERT ANALYTICS
         $data_to_insert = [];
 
-        //collect mail and social time
+        //CALCULATE APP AND WEB USAGE
+        foreach ($user_app_time as $project_id => $duration) {
+            $data_to_insert[$project_id]['app_usage'] = $duration;
+        }
+
+        foreach ($user_web_time as $project_id => $duration) {
+            $data_to_insert[$project_id]['web_usage'] = $duration;    
+        }
+
+        //CALCULATE MAIL AND SOCIAL TIME
         foreach ($user_web_social_time as $project_id => $duration) {
             $data_to_insert[$project_id]['social_network_secs'] = $duration;
         }
@@ -299,10 +313,7 @@ Artisan::command('staffmetric:analytics', function () {
             $data_to_insert[$project_id]['email_secs'] = $duration;
         }
 
-        $user_idle = $reportsService->getIdle($user->id, $employer_local_time, null, $last_index_id,)
-            ->groupBy('project_id');
-
-        //collect idle data to array
+        //CALCULATE IDLE TIME
         foreach ($user_idle as $project_id => $pauses) {
             $idle_secs = $idle_count = null;
             foreach ($pauses as $pause) {
@@ -315,7 +326,7 @@ Artisan::command('staffmetric:analytics', function () {
             $data_to_insert[$project_id]['meetings_secs'] = null;
         }
 
-        //collect productivity data to array
+        //CALCULATE PRODUCTIVITY
         if( $user_productivity_reports->count() ) {
             //extract last index id
             $last_index_id = $user->activities()
@@ -351,11 +362,10 @@ Artisan::command('staffmetric:analytics', function () {
                 $data_to_insert[$project_id]['overtime_secs'] = $over_time_secs;
                 $data_to_insert[$project_id]['total_secs'] = $productive_mins + $non_productive_mins + $neutral_mins;
                 $data_to_insert[$project_id]['office_secs'] = $productive_mins + $non_productive_mins + $neutral_mins;
-                $data_to_insert[$project_id]['app_usage'] = $user_app_time->get($project_id, null);
-                $data_to_insert[$project_id]['web_usage'] = $user_web_time->get($project_id, null);
             }
         }
 
+        // INSERT DATA TO DATABASE
         if( count($data_to_insert) ) {
             foreach ($data_to_insert as $project_id => $data) {
                 $analytic = $user->analytics()->create([
