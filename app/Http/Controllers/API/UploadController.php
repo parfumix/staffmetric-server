@@ -10,16 +10,19 @@ class UploadController extends Controller {
     public function activities(Request $request, \App\Models\Device $device) {
         $data = $request->get('data', []);
 
+        $to_insert = [];
         foreach ($data as $item) {
-            $request->user()->activities()->create([
+            $to_insert[] = [
                 'device_id' => $device->id,
                 'app' =>  $item['app'],
                 'is_url' => $item['is_url'] ? true : false,
                 'duration' => $item['duration'],
                 'start_at' => $item['start_at'],
                 'end_at' => $item['end_at']
-            ]);
+            ];
         }
+
+        $request->user()->activities()->createMany($to_insert);
 
         $device->update(['last_update_at' => now()]);
 
