@@ -97,7 +97,6 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date_format:"Y-m-d"',
             'end_at' => 'nullable|date_format:"Y-m-d"',
-            'groupBy' => 'nullable'
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
@@ -124,7 +123,6 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date_format:"Y-m-d"',
             'end_at' => 'nullable|date_format:"Y-m-d"',
-            'groupBy' => 'nullable'
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);

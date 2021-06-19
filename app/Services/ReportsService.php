@@ -317,8 +317,8 @@ class ReportsService {
 
     public function getQueryTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
         $query = \App\Models\TopApp::whereIn('top_apps.user_id', $employees)
-            ->addSelect(['app', 'categories.name', \DB::raw("sum(duration) as duration")])
-            ->leftJoin('categories', 'categories.id as category_id', 'categories.name as category_name', '=', 'top_apps.category_id');
+            ->addSelect(['top_apps.app', 'categories.id as category_id', 'categories.title as category_name', \DB::raw("sum(top_apps.duration) as duration")])
+            ->leftJoin('categories', 'categories.id', '=', 'top_apps.category_id');
 
         if($category) {
             $query->where('top_apps.category_id', $category->id);
@@ -335,17 +335,19 @@ class ReportsService {
         return $query;
     }
 
-    public function getTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+    public function getTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null, $limit = 10) {
         return $this->getQueryTopApps($employees, $start, $end, $category)
             ->groupBy(['app'])
             ->orderBy('top_apps.duration', 'desc')
+            ->limit($limit)
             ->get();
     }
 
-    public function getTopCategories(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null) {
+    public function getTopCategories(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null, $limit = 3) {
         return $this->getQueryTopApps($employees, $start, $end, $category)
             ->groupBy(['category_id'])
             ->orderBy('top_apps.duration', 'desc')
+            ->limit($limit)
             ->get();
     }
 
