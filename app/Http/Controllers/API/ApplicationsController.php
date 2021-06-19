@@ -16,9 +16,14 @@ class ApplicationsController extends Controller {
      */
     public function index(Request $request) {
         $user_applications = $request->user()->apps;
-        $globl_applications = \App\Models\App::whereNotIn('name', $user_applications->pluck('name')->values())->get();
 
-        return Application::collection( collect($globl_applications)->merge($user_applications) );
+        $globl_applications = \App\Models\App::whereNotIn(
+            'name', $user_applications->pluck('name')->values()
+        )->get();
+
+        return Application::collection( 
+            collect($globl_applications)->merge($user_applications)
+         );
     }
 
     /**
@@ -33,18 +38,18 @@ class ApplicationsController extends Controller {
             'category_id' => 'required',
         ]);
 
-        $application = \App\Models\App::find($attr['id']);
+        $application = \App\Models\App::find($attr['application_id']);
         $user_app = $request->user()->apps()->where('id', $attr['application_id'])->first();
 
         if(! $user_app) {
-            $user_app = \Auth::user()->apps()->create(new \App\Models\App([
-                'title' => $application->title,
-                'productivity' => $application->productivity,
+            $user_app = \Auth::user()->apps()->save(new \App\Models\App([
+                'name' => $application->name,
+                'category_id' => $attr['category_id'],
             ]));
         } else {
             \Auth::user()->apps()->updateOrCreate(
                 ['id' => $attr['application_id']],
-                ['productivity' => $attr['category_id']],
+                ['category_id' => $attr['category_id']],
             );
         }
 
@@ -57,19 +62,8 @@ class ApplicationsController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id) {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id) {
-        //
+    public function show(\App\Models\App $application) {
+        return new Application($application);
     }
 
     /**
@@ -78,7 +72,8 @@ class ApplicationsController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id) {
-        //
+    public function destroy(Request $request, \App\Models\App $application) {
+        $request->user()->apps()->where('id', $application->id)->delete();
+        return response()->json(['success' => true]);
     }
 }
