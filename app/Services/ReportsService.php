@@ -27,7 +27,7 @@ class ReportsService {
         $query->join('users', 'users.id', '=', 'activities.user_id');
 
         if(! is_null($employer_id)) {
-            // join with employee apps
+            // FOR EMPLOYER APPS
             $query->leftJoin('employee_apps', function ($join) use($employer_id) {
                 $join->on('employee_apps.name', '=', 'activities.app')
                     ->on('employee_apps.user_id', '=', \DB::raw($employer_id))
@@ -64,6 +64,7 @@ class ReportsService {
             ]);
         }
 
+        // FOR MY APPS
         $query->leftJoin('my_apps', function ($join) {
             $join->on('my_apps.name', '=', 'activities.app')
                 ->on('my_apps.user_id', '=', 'activities.user_id');
@@ -83,6 +84,7 @@ class ReportsService {
                 });
         });
 
+        // FOR GLOBAL APPS
         $query->leftJoin('apps', function ($join) use($employer_id) {
             $join->on('apps.name', '=', 'activities.app')
                 ->on(function ($query) {
