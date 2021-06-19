@@ -15,9 +15,14 @@ class CategoriesController extends Controller {
      */
     public function index(Request $request) {
         $user_categories = $request->user()->categories;
-        $globl_categories = \App\Models\Category::whereNotIn('title', $user_categories->pluck('title')->values())->get();
 
-        return Category::collection( collect($globl_categories)->merge($user_categories) );
+        $globl_categories = \App\Models\Category::whereNotIn(
+            'title', $user_categories->pluck('title')->values()
+        )->get();
+
+        return Category::collection( 
+            collect($globl_categories)->merge($user_categories)
+         );
     }
 
     /**
@@ -32,13 +37,13 @@ class CategoriesController extends Controller {
             'productivity' => 'required',
         ]);
 
-        $category = \App\Models\Category::find($attr['id']);
+        $category = \App\Models\Category::find($attr['category_id']);
         $user_category = $request->user()->categories()->where('id', $attr['category_id'])->first();
 
         if(! $user_category) {
-            $user_category = \Auth::user()->categories()->create(new \App\Models\Category([
+            $user_category = \Auth::user()->categories()->save(new \App\Models\Category([
                 'title' => $category->title,
-                'productivity' => $category->productivity,
+                'productivity' => $attr['productivity'],
             ]));
         } else {
             \Auth::user()->categories()->updateOrCreate(
