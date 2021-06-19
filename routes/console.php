@@ -129,7 +129,7 @@ Artisan::command('staffmetric:top_apps', function () {
 
         $query = $reportsService->categorize($query, $employer->id);
     
-        // exclude null apps and duration 0
+        // exclude idle time and duration 0
         $query->whereNotNull('app')
             ->where('duration', '>', 0);
 
