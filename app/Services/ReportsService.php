@@ -281,11 +281,9 @@ class ReportsService {
             $query->addSelect(\DB::raw("IFNULL(SUM(analytics.{$column}), 0) as {$column}"));
         }
 
-        if(count($employees)) {
-            $query->whereIn('analytics.user_id', $employees)
-                ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
-                ->addSelect([\DB::raw('users.name as name')]);
-        }
+        $query->whereIn('analytics.user_id', $employees)
+            ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
+            ->addSelect([\DB::raw('users.name as name')]);
 
         if(! is_null($start)) {
             $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));

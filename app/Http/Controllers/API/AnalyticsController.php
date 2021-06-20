@@ -16,7 +16,7 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
-            'employees' => 'nullable',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
             'groupBy' => 'nullable'
         ]);
 
@@ -37,7 +37,9 @@ class AnalyticsController extends Controller {
         }
 
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return !in_array($u->id, $validated['employees']);
+        });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
@@ -94,7 +96,7 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
-            'employees' => 'nullable',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
         ]);
     }
 
@@ -102,6 +104,7 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
@@ -111,7 +114,9 @@ class AnalyticsController extends Controller {
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return !in_array($u->id, $validated['employees']);
+        });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
@@ -128,6 +133,7 @@ class AnalyticsController extends Controller {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
@@ -137,7 +143,9 @@ class AnalyticsController extends Controller {
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return !in_array($u->id, $validated['employees']);
+        });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
