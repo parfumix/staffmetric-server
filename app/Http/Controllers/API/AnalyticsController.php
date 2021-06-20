@@ -26,15 +26,8 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
-        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : false;
-
-        // set group by param
-        if(!$groupBy) {
-            //TODO if range is bigger than a week set range to days
-            //TODO if range is bigger than a month set range to weeks
-            //TODO if range is bigger than a 3 to 6 months set rante to months
-            //TODO if range is bigger than 6 months set range to months
-        }
+        $availableGroupBy = ['hour', 'day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'month';
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -44,11 +37,11 @@ class AnalyticsController extends Controller {
         $employer = \Auth::user();
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
         );
 
         $current_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
         );
 
         // calculate current metrics
@@ -58,12 +51,14 @@ class AnalyticsController extends Controller {
         $current_total_secs = $current_productive_secs + $current_non_productive_secs + $current_neutral_secs;
 
 
-         // calculate prev metrics
-         $prev_productive_secs = $prev_period_data->pluck('productive_secs')->sum();
-         $prev_non_productive_secs = $prev_period_data->pluck('non_productive_secs')->sum();
-         $prev_neutral_secs = $prev_period_data->pluck('neutral_secs')->sum();
-         $prev_total_secs = $prev_productive_secs + $prev_non_productive_secs + $prev_neutral_secs;
+        // calculate prev metrics
+        $prev_productive_secs = $prev_period_data->pluck('productive_secs')->sum();
+        $prev_non_productive_secs = $prev_period_data->pluck('non_productive_secs')->sum();
+        $prev_neutral_secs = $prev_period_data->pluck('neutral_secs')->sum();
+        $prev_total_secs = $prev_productive_secs + $prev_non_productive_secs + $prev_neutral_secs;
 
+        $key = array_search($groupBy, $availableGroupBy);
+        
         return response()->json([
             'total_secs' => [
                 'current' => $current_total_secs,
@@ -78,7 +73,9 @@ class AnalyticsController extends Controller {
                 'prev' => $prev_non_productive_secs,
             ],
 
-            'categories' => $current_period_data->pluck('month'),
+            'categories' => $current_period_data->pluck(
+                isset($availableGroupBy[$key - 1]) ? $availableGroupBy[$key - 1] : $availableGroupBy[$key]
+            ),
             'prev_period_data' => [
                 'productive_secs' => $prev_period_data->pluck('productive_secs'),
                 'neutral_secs' => $prev_period_data->pluck('neutral_secs'),
