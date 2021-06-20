@@ -36,7 +36,7 @@ class AnalyticsController extends Controller {
         }
 
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees;
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
@@ -106,7 +106,7 @@ class AnalyticsController extends Controller {
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees;
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
@@ -132,7 +132,7 @@ class AnalyticsController extends Controller {
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
         //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees;
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get();
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 

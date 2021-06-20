@@ -17,6 +17,12 @@ class User extends Authenticatable {
 
     use SluggableScopeHelpers;
 
+    // user -> employee status
+    const SENT = 'sent';
+    const ACCEPTED = 'accepted';
+    const REJECTED = 'rejected';
+
+
     /**
      * The attributes that are mass assignable.
      *
@@ -116,11 +122,17 @@ class User extends Authenticatable {
     }
 
     /** Get users in relation with current user . */
-    public function employees() {
-        return $this->belongsToMany(User::class, 'user_employee', 'user_id', 'employee_id')
+    public function employees($status = null) {
+        $query =  $this->belongsToMany(User::class, 'user_employee', 'user_id', 'employee_id')
             ->using(UserEmployee::class)
             ->withPivot(['id', 'status', 'name', 'daily_reports', 'weekly_reports', 'monthly_reports', 'send_a_copy_to_employee', 'disabled'])
             ->withTimestamps();
+
+        if( $status ) {
+            $query->where('user_employee.status', $status);
+        }
+
+        return $query;
     }
 
     /** Get user employers */
