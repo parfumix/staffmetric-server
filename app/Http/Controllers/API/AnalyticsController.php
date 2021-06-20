@@ -14,8 +14,9 @@ class AnalyticsController extends Controller {
      */
     public function productivity(Request $request) {
         $validated = $request->validate([
-            'start_at' => 'nullable|date_format:"Y-m-d"',
-            'end_at' => 'nullable|date_format:"Y-m-d"',
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable',
             'groupBy' => 'nullable'
         ]);
 
@@ -90,13 +91,17 @@ class AnalyticsController extends Controller {
     }
 
     public function employees(Request $request) {
-        //
+        $validated = $request->validate([
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable',
+        ]);
     }
 
     public function topApps(Request $request) {
         $validated = $request->validate([
-            'start_at' => 'nullable|date_format:"Y-m-d"',
-            'end_at' => 'nullable|date_format:"Y-m-d"',
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
@@ -121,8 +126,8 @@ class AnalyticsController extends Controller {
 
     public function topCategories(Request $request) {
         $validated = $request->validate([
-            'start_at' => 'nullable|date_format:"Y-m-d"',
-            'end_at' => 'nullable|date_format:"Y-m-d"',
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
