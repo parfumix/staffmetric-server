@@ -58,7 +58,7 @@ class AnalyticsController extends Controller {
         $prev_total_secs = $prev_productive_secs + $prev_non_productive_secs + $prev_neutral_secs;
 
         $key = array_search($groupBy, $availableGroupBy);
-        
+
         return response()->json([
             'total_secs' => [
                 'current' => $current_total_secs,
@@ -94,7 +94,44 @@ class AnalyticsController extends Controller {
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
             'employees' => 'nullable|array|exists:App\Models\User,id',
+            'groupBy' => 'nullable'
         ]);
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of year
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        
+        $availableGroupBy = ['hour', 'day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'month';
+
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
+        });
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $for_categories = $reportsService->getProductivityAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+        );
+
+        $users_analytics = $reportsService->getProductivityAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
+        )->groupBy('user_id');
+
+        $key = array_search($groupBy, $availableGroupBy);
+
+        return response()->json([
+            'categories' => $for_categories->pluck(
+                isset($availableGroupBy[$key - 1]) ? $availableGroupBy[$key - 1] : $availableGroupBy[$key]
+            ),
+            'users' => $users_analytics
+        ]);
+
     }
 
     public function topApps(Request $request) {
