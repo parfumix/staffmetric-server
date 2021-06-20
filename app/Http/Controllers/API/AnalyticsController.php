@@ -31,7 +31,9 @@ class AnalyticsController extends Controller {
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return !in_array($u->id, $validated['employees']);
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
@@ -149,7 +151,9 @@ class AnalyticsController extends Controller {
         
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return !in_array($u->id, $validated['employees']);
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
@@ -178,7 +182,9 @@ class AnalyticsController extends Controller {
         
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return !in_array($u->id, $validated['employees']);
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
