@@ -338,7 +338,7 @@ class ReportsService {
     public function getTopApps(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null, $limit = 10) {
         return $this->getQueryTopApps($employees, $start, $end, $category)
             ->groupBy(['app'])
-            ->orderBy('top_apps.duration', 'desc')
+            ->orderBy('duration', 'desc')
             ->limit($limit)
             ->get();
     }
@@ -346,7 +346,7 @@ class ReportsService {
     public function getTopCategories(array $employees = [], Carbon $start = null, Carbon $end = null, Category $category = null, $limit = 3) {
         return $this->getQueryTopApps($employees, $start, $end, $category)
             ->groupBy(['category_id'])
-            ->orderBy('top_apps.duration', 'desc')
+            ->orderBy('duration', 'desc')
             ->limit($limit)
             ->get();
     }
