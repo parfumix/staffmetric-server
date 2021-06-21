@@ -28,11 +28,7 @@ class CategoriesTableSeeder extends Seeder {
         ];
 
         foreach ($categories as $category => $productivity) {
-            \DB::table('categories')->insert([
-                'user_id' => null,
-                'title' => $category,
-                'productivity' => $productivity,
-            ]);
+            \App\Models\Category::create(['user_id' => null, 'title' => $category, 'productivity' => $productivity,]);
         }
     }
 }

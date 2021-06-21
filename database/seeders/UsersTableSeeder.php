@@ -93,7 +93,7 @@ class UsersTableSeeder extends Seeder {
                     'updated_at' => $date->format('Y-m-d H:i:s'),
                 ];
 
-                if($email_secs && false) {
+                if($email_secs) {
                     $random_provider = $random_email_providers->keys()->random();
                     $random_category_provider = $random_email_providers[$random_provider];
                     $top_apps_to_insert[] = [
@@ -108,11 +108,11 @@ class UsersTableSeeder extends Seeder {
                     ];
                 }
 
-                if($social_network_secs && false) {
+                if($social_network_secs) {
                     $random_provider = $random_social_providers->keys()->random();
                     $random_category_provider = $random_social_providers[$random_provider];
                     $top_apps_to_insert[] = [
-                        'last_idle_index' => null,
+                        'last_index' => null,
                         'app' => $random_provider,
                         'project_id' => null,
                         'user_id' => $user->id,

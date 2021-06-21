@@ -61,6 +61,7 @@ if(! function_exists('generate_date_range')) {
         return $dates;
     }
 }
+
 if(! function_exists('hours_range')) {
 
     function hours_range($from = null, $to = null, $format = 'H a') {
