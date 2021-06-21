@@ -49,7 +49,7 @@ class UsersTableSeeder extends Seeder {
             foreach ($hours_range as $hour => $formatted) {
                 $date->setTime($hour, 0, 0);
 
-                $tota_secs = rand(2500, 3600);
+                $tota_secs = rand(20000, 30000);
 
                 $productive_percentage = rand(30, 50);
                 $productive_secs = ($productive_percentage * $tota_secs) / 100;
