@@ -23,6 +23,7 @@ class UserFactory extends Factory {
     public function definition() {
         return [
             'name' => $this->faker->name(),
+            'profile_id' => \App\Models\Profile::inRandomOrder()->first()->id,
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => bcrypt('secret'), // secret

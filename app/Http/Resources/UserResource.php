@@ -13,6 +13,16 @@ class UserResource extends JsonResource {
      * @return array
      */
     public function toArray($request) {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'active' => true,
+            'profile' => new \App\Http\Resources\ProfileResource( $this->profile ),
+            'email' => $this->email,
+            'avatar' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=2&amp;w=256&amp;h=256&amp;q=80',
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

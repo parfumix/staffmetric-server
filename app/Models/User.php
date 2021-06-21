@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable {
     
@@ -17,11 +18,12 @@ class User extends Authenticatable {
 
     use SluggableScopeHelpers;
 
+    use HasRoles;
+
     // user -> employee status
     const SENT = 'sent';
     const ACCEPTED = 'accepted';
     const REJECTED = 'rejected';
-
 
     /**
      * The attributes that are mass assignable.

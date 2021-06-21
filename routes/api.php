@@ -8,6 +8,8 @@ use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\InviteController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
+use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\ProfilesController;
 use App\Http\Controllers\AuthController;
 
 /*
@@ -27,6 +29,7 @@ Route::post('/device/auth', [DeviceController::class, 'login']);
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
+    // get current authenticated user
     Route::get('/user', function() {
         return auth()->user();
     });
@@ -37,9 +40,13 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     // adding upload routes
     Route::post('/upload/activities/{device}', [UploadController::class, 'activities']);
 
+    // adding users controller
+    Route::get('/users',  [UsersController::class, 'index'] );
+    Route::get('/profiles',  [ProfilesController::class, 'index'] );
+
     // adding analytics reports
     Route::match(['get', 'post'], 'analytics/productivity/{user?}', [AnalyticsController::class, 'productivity']);
-    Route::match(['get', 'post'], 'analytics/employees/{user?}', [AnalyticsController::class, 'employees']);
+    Route::match(['get', 'post'], 'analytics/productivity-by-employee/{user?}', [AnalyticsController::class, 'employees']);
     Route::match(['get', 'post'], 'analytics/top-apps/{user?}', [AnalyticsController::class, 'topApps']);
     Route::match(['get', 'post'], 'analytics/top-categories/{user?}', [AnalyticsController::class, 'topCategories']);
 

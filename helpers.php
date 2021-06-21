@@ -61,3 +61,27 @@ if(! function_exists('generate_date_range')) {
         return $dates;
     }
 }
+if(! function_exists('hours_range')) {
+
+    function hours_range($from = null, $to = null, $format = 'H a') {
+        $dt = Carbon::createFromTime(0);
+        $dt2 = $dt->copy()->addDay(1);
+
+        $hours = [];
+        $dt->diffInHoursFiltered(function ($date) use(&$hours, $format, $from, $to) {
+            if(! is_null($from)) {
+                if( $date->format('H') < $from )
+                    return;
+            }
+
+            if(! is_null($to)) {
+                if( $date->format('H') > $to )
+                    return;
+            }
+
+            $hours[$date->format('G')] = $date->format($format);
+        }, $dt2);
+
+        return $hours;
+    }
+}
