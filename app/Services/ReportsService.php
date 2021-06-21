@@ -293,8 +293,9 @@ class ReportsService {
             $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
         }
 
-        $query->groupBy($groupBy);
-            //->orderBy($groupBy);
+        //TODO
+        $query->groupBy($groupBy)
+            ->orderBy(is_array($groupBy) ? $groupBy[0] : $groupBy);
 
         return $query;
     }

@@ -76,7 +76,7 @@ class AnalyticsController extends Controller {
             ],
 
             'categories' => $current_period_data->pluck(
-                isset($availableGroupBy[$key - 1]) ? $availableGroupBy[$key - 1] : $availableGroupBy[$key]
+                $availableGroupBy[$key]
             ),
             'prev_period_data' => [
                 'productive_secs' => $prev_period_data->pluck('productive_secs'),
@@ -129,7 +129,7 @@ class AnalyticsController extends Controller {
 
         return response()->json([
             'categories' => $for_categories->pluck(
-                isset($availableGroupBy[$key - 1]) ? $availableGroupBy[$key - 1] : $availableGroupBy[$key]
+                $availableGroupBy[$key]
             ),
             'users' => $users_analytics
         ]);
