@@ -283,7 +283,10 @@ class ReportsService {
 
         $query->whereIn('analytics.user_id', $employees)
             ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
-            ->addSelect([\DB::raw('users.name as name')]);
+            ->addSelect([
+                \DB::raw('users.name as name'),
+                \DB::raw('users.email as email'),
+            ]);
 
         if(! is_null($start)) {
             $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));
@@ -293,7 +296,6 @@ class ReportsService {
             $query->whereDate('analytics.employee_time', '<=', $end->format('Y-m-d'));
         }
 
-        //TODO
         $query->groupBy($groupBy)
             ->orderBy(is_array($groupBy) ? $groupBy[0] : $groupBy);
 

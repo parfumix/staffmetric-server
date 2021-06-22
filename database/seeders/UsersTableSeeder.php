@@ -28,7 +28,6 @@ class UsersTableSeeder extends Seeder {
         for($date = $start_at->copy(); $date->lte($end_at); $date->addDay()) {
             $date_range[] = $date->copy();
         }
-        $hours_range = hours_range(9, rand(18, 19), 'H');
 
         $analytics_to_insert = [];
         $top_apps_to_insert = [];
@@ -46,8 +45,9 @@ class UsersTableSeeder extends Seeder {
         $random_email_providers = \App\Models\App::where('category_id', $categories['Email'])->pluck('category_id', 'name');
 
         foreach ($date_range as $date) {
+            $hours_range = hours_range(9, rand(16, 20), 'H');
             foreach ($hours_range as $hour => $formatted) {
-                $date->copy()->setTime($hour, 0, 0);
+                $date->setTime($hour, 0, 0);
 
                 $tota_secs = rand(20000, 30000);
 

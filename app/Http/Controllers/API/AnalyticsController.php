@@ -22,12 +22,12 @@ class AnalyticsController extends Controller {
 
         $reportsService = app(\App\Services\ReportsService::class);
 
-        // if not start_at, end_at set than use start of year
-        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
-        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
-        $availableGroupBy = ['hour', 'day', 'week', 'month', 'year'];
-        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'month';
+        $availableGroupBy = ['day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -84,9 +84,9 @@ class AnalyticsController extends Controller {
                 'non_productive_secs' => $prev_period_data->pluck('non_productive_secs'),
             ],
             'current_period_data' => [
-                'productive_secs' => $prev_period_data->pluck('productive_secs'),
-                'neutral_secs' => $prev_period_data->pluck('neutral_secs'),
-                'non_productive_secs' => $prev_period_data->pluck('non_productive_secs'),
+                'productive_secs' => $current_period_data->pluck('productive_secs'),
+                'neutral_secs' => $current_period_data->pluck('neutral_secs'),
+                'non_productive_secs' => $current_period_data->pluck('non_productive_secs'),
             ],
         ]);
     }
@@ -101,12 +101,12 @@ class AnalyticsController extends Controller {
 
         $reportsService = app(\App\Services\ReportsService::class);
 
-        // if not start_at, end_at set than use start of year
-        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
-        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
-        $availableGroupBy = ['hour', 'day', 'week', 'month', 'year'];
-        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'month';
+        $availableGroupBy = ['day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -123,7 +123,7 @@ class AnalyticsController extends Controller {
 
         $users_analytics = $reportsService->getProductivityAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
-        )->groupBy('user_id');
+        );
 
         $key = array_search($groupBy, $availableGroupBy);
 
@@ -131,7 +131,7 @@ class AnalyticsController extends Controller {
             'categories' => $for_categories->pluck(
                 $availableGroupBy[$key]
             ),
-            'users' => $users_analytics
+            'users' => $users_analytics->groupBy('user_id')
         ]);
 
     }
@@ -145,9 +145,9 @@ class AnalyticsController extends Controller {
 
         $reportsService = app(\App\Services\ReportsService::class);
 
-        // if not start_at, end_at set than use start of year
-        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
-        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {

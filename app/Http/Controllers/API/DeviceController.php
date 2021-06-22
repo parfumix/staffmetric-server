@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 
 class DeviceController extends Controller {
     
-
     public function create(Request $request) {
         $attr = $request->validate([
             'name' => 'required',

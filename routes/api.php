@@ -45,10 +45,10 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     Route::get('/profiles',  [ProfilesController::class, 'index'] );
 
     // adding analytics reports
-    Route::match(['get', 'post'], 'analytics/productivity/{user?}', [AnalyticsController::class, 'productivity']);
-    Route::match(['get', 'post'], 'analytics/productivity-by-employee/{user?}', [AnalyticsController::class, 'employees']);
-    Route::match(['get', 'post'], 'analytics/top-apps/{user?}', [AnalyticsController::class, 'topApps']);
-    Route::match(['get', 'post'], 'analytics/top-categories/{user?}', [AnalyticsController::class, 'topCategories']);
+    Route::match(['get', 'post'], 'analytics/productivity', [AnalyticsController::class, 'productivity']);
+    Route::match(['get', 'post'], 'analytics/productivity-by-employee', [AnalyticsController::class, 'employees']);
+    Route::match(['get', 'post'], 'analytics/top-apps', [AnalyticsController::class, 'topApps']);
+    Route::match(['get', 'post'], 'analytics/top-categories', [AnalyticsController::class, 'topCategories']);
 
     // adding invite route
     Route::get('invite', [InviteController::class, 'invite']);
