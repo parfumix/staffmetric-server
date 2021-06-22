@@ -49,7 +49,7 @@ class UsersTableSeeder extends Seeder {
             foreach ($hours_range as $hour => $formatted) {
                 $date->setTime($hour, 0, 0);
 
-                $tota_secs = rand(20000, 30000);
+                $tota_secs = rand(2800, 3600);
 
                 //calculate percentage of productivities
                 $productive_percentage = rand(30, 40);
@@ -65,8 +65,8 @@ class UsersTableSeeder extends Seeder {
                 $social_network_secs = $non_productive_secs;
 
                 //calculate idle time
-                $idle_count = rand(1, 5);
-                $idle_secs = rand(500, 1200);;
+                $idle_count = rand(1, 3);
+                $idle_secs = rand(100, 300);;
                 $meeting_secs = null;
 
                 $web_usage_percentage = rand(30, 60);
