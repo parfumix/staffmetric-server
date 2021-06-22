@@ -19,10 +19,10 @@ class ApplicationsController extends Controller {
 
         $globl_applications = \App\Models\App::whereNotIn(
             'name', $user_applications->pluck('name')->values()
-        )->get();
+        )->ordered()->get();
 
         return ApplicationResource::collection( 
-            collect($globl_applications)->merge($user_applications)
+            collect($globl_applications)->merge($user_applications)->sortBy('order_column')
          );
     }
 
@@ -46,14 +46,18 @@ class ApplicationsController extends Controller {
                 'name' => $application->name,
                 'category_id' => $attr['category_id'],
             ]));
+
+            \App\Models\App::setNewOrder([$user_app->id], $application['order_column']);
         } else {
-            \Auth::user()->apps()->updateOrCreate(
+            $user_app = \Auth::user()->apps()->updateOrCreate(
                 ['id' => $attr['application_id']],
                 ['category_id' => $attr['category_id']],
             );
         }
 
-        return new ApplicationResource($user_app);
+        return new ApplicationResource(
+            \App\Models\App::find( $user_app->id )
+        );
     }
 
     /**
