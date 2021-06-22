@@ -22,7 +22,7 @@ class UsersTableSeeder extends Seeder {
 
     public function generateAnalyticsData(\App\Models\User $admin, \App\Models\User $user) {
         $start_at = now()->subWeek();
-        $end_at = now()->addMonth();
+        $end_at = now()->addWeek();
 
         $date_range = [];
         for($date = $start_at->copy(); $date->lte($end_at); $date->addDay()) {
@@ -47,23 +47,27 @@ class UsersTableSeeder extends Seeder {
 
         foreach ($date_range as $date) {
             foreach ($hours_range as $hour => $formatted) {
-                $date->setTime($hour, 0, 0);
+                $date->copy()->setTime($hour, 0, 0);
 
                 $tota_secs = rand(20000, 30000);
 
-                $productive_percentage = rand(30, 50);
+                //calculate percentage of productivities
+                $productive_percentage = rand(30, 40);
+                $non_productive_percentage = rand($productive_percentage, 50);
+                $neutral_percentage = 100 - ( $productive_percentage + $non_productive_percentage );
+                
                 $productive_secs = ($productive_percentage * $tota_secs) / 100;
-                $non_productive_secs = (($productive_percentage / 2) * $tota_secs) / 100;
-                $neutral_secs = (($productive_percentage / 2) * $tota_secs) / 100;
+                $non_productive_secs = ($non_productive_percentage * $tota_secs) / 100;
+                $neutral_secs = ($neutral_percentage * $tota_secs) / 100;
 
+                //calculate email and social networking time
                 $email_secs = (rand(30, 60) * $productive_secs) / 100;
                 $social_network_secs = $non_productive_secs;
 
+                //calculate idle time
                 $idle_count = rand(1, 5);
-                $idle_secs = rand(2500, 3600);;
+                $idle_secs = rand(500, 1200);;
                 $meeting_secs = null;
-
-                $overtime_secs = $hour > 18 ? $tota_secs : null;
 
                 $web_usage_percentage = rand(30, 60);
                 $web_usage = ($web_usage_percentage * $tota_secs) / 100;
@@ -79,11 +83,13 @@ class UsersTableSeeder extends Seeder {
                     'productive_secs' => $productive_secs,
                     'non_productive_secs' => $non_productive_secs,
                     'neutral_secs' => $neutral_secs,
+
                     'idle_secs' => $idle_secs,
                     'idle_count' => $idle_count,
+
                     'email_secs' => $email_secs,
                     'office_secs' => $tota_secs,
-                    'overtime_secs' => $overtime_secs,
+                    'overtime_secs' => null,
                     'meetings_secs' => $meeting_secs,
                     'social_network_secs' => $social_network_secs,
                     'app_usage' => $app_usage,
@@ -100,7 +106,7 @@ class UsersTableSeeder extends Seeder {
                         'last_index' => null,
                         'project_id' => null,
                         'user_id' => $user->id,
-                        'category_id' => $random_category_provider ?? null,
+                        'category_id' => $random_category_provider,
                         'app' => $random_provider,
                         'duration' => $email_secs,
                         'created_at' => $date->format('Y-m-d H:i:s'),
@@ -113,10 +119,10 @@ class UsersTableSeeder extends Seeder {
                     $random_category_provider = $random_social_providers[$random_provider];
                     $top_apps_to_insert[] = [
                         'last_index' => null,
-                        'app' => $random_provider,
                         'project_id' => null,
                         'user_id' => $user->id,
-                        'category_id' => $random_category_provider ?? null,
+                        'category_id' => $random_category_provider,
+                        'app' => $random_provider,
                         'duration' => $social_network_secs,
                         'created_at' => $date->format('Y-m-d H:i:s'),
                         'updated_at' => $date->format('Y-m-d H:i:s'),
