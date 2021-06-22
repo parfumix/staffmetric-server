@@ -131,7 +131,8 @@ class AnalyticsController extends Controller {
             'categories' => $for_categories->pluck(
                 $availableGroupBy[$key]
             ),
-            'users' => $users_analytics->groupBy('user_id')
+            'users' => $users_analytics->pluck('name', 'user_id'),
+            'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
         ]);
 
     }
