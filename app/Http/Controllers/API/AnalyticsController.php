@@ -29,6 +29,21 @@ class AnalyticsController extends Controller {
         $availableGroupBy = ['day', 'week', 'month', 'year'];
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
+        //calculate prev time
+        if( $groupBy == 'year' ) {
+            $prev_start_at = $start_at->copy()->subYear();
+            $prev_end_at = $end_at->copy()->subYear();
+        } elseif ( $groupBy == 'month' ) {
+            $prev_start_at = $start_at->copy()->subMonth();
+            $prev_end_at = $end_at->copy()->subMonth();
+        } elseif ( $groupBy == 'week' ) {
+            $prev_start_at = $start_at->copy()->subWeek();
+            $prev_end_at = $end_at->copy()->subWeek();
+        } elseif ( $groupBy == 'day' ) {
+            $prev_start_at = $start_at->copy()->subDay();
+            $prev_end_at = $end_at->copy()->subDay();
+        }
+
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
             return count($validated['employees'] ?? [])
@@ -39,7 +54,7 @@ class AnalyticsController extends Controller {
         $employer = \Auth::user();
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
         );
 
         $current_period_data = $reportsService->getProductivityAnalytics(
