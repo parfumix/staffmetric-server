@@ -9,6 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
 use Spatie\Permission\Traits\HasRoles;
+use Mpociot\Teamwork\Traits\UserHasTeams;
 
 class User extends Authenticatable {
     
@@ -19,6 +20,8 @@ class User extends Authenticatable {
     use SluggableScopeHelpers;
 
     use HasRoles;
+
+    use UserHasTeams;
 
     // user -> employee status
     const SENT = 'sent';
