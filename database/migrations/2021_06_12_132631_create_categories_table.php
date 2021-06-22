@@ -17,6 +17,7 @@ class CreateCategoriesTable extends Migration {
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->string('title');
             $table->enum('productivity', ['productive', 'neutral', 'non-productive'])->default('neutral');
+            $table->smallInteger('order_column')->nullable();
             $table->timestamps();
 
             $table->index(['title', 'productivity']);

@@ -4,19 +4,36 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
 /**
- * Table is used for collects general and user(employer) categories 
- * 
+ * Table is used for collects general and user(employer) categories
+ *
  */
 
-class Category extends Model {
-    
+class Category extends Model implements Sortable {
+
     use HasFactory;
+
+    use SortableTrait;
+
+    public $sortable = [
+        'order_column_name' => 'order_column',
+        'sort_when_creating' => true,
+    ];
 
     protected $table = 'categories';
 
     protected $fillable = ['user_id', 'title', 'productivity'];
+
+    /**
+     * Make Sortable
+     * 
+     */
+    public function buildSortQuery() {
+        return static::query()->where('user_id', $this->user_id);
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -36,7 +53,7 @@ class Category extends Model {
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
     public function users() {
-        return $this->morphedByMany(User::class , 'productivity');
+        return $this->morphedByMany(User::class, 'productivity');
     }
 
     /**
@@ -74,7 +91,6 @@ class Category extends Model {
     public function byUsers(array $users) {
         return $this->whereIn('user_id', $users)->orWhereNull('user_id')->get();
     }
-
 
     public function isProductive() {
         return $this->productivity == 'productive';

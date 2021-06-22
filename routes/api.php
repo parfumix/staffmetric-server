@@ -10,6 +10,7 @@ use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\ProfilesController;
+use App\Http\Controllers\API\AutomationsController;
 use App\Http\Controllers\AuthController;
 
 /*
@@ -50,10 +51,15 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     Route::match(['get', 'post'], 'analytics/top-apps', [AnalyticsController::class, 'topApps']);
     Route::match(['get', 'post'], 'analytics/top-categories', [AnalyticsController::class, 'topCategories']);
 
+    // adding burnout reports
+
     // adding invite route
     Route::get('invite', [InviteController::class, 'invite']);
 
     // adding categories / applications
     Route::apiResource('categories', CategoriesController::class);
     Route::apiResource('applications', ApplicationsController::class);
+
+    // adding automations
+    Route::apiResource('automations', AutomationsController::class);
 });

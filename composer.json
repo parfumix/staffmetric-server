@@ -17,6 +17,7 @@
         "laravel/telescope": "^4.5",
         "laravel/tinker": "^2.5",
         "nesbot/carbon": "^2.49",
+        "spatie/eloquent-sortable": "^3.11",
         "spatie/laravel-permission": "^4.2",
         "webpatser/laravel-uuid": "^3.0"
     },

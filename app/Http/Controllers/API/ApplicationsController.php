@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Application;
+use App\Http\Resources\ApplicationResource;
 use App\Models\App;
 use Illuminate\Http\Request;
 
@@ -21,7 +21,7 @@ class ApplicationsController extends Controller {
             'name', $user_applications->pluck('name')->values()
         )->get();
 
-        return Application::collection( 
+        return ApplicationResource::collection( 
             collect($globl_applications)->merge($user_applications)
          );
     }
@@ -53,7 +53,7 @@ class ApplicationsController extends Controller {
             );
         }
 
-        return new Application($user_app);
+        return new ApplicationResource($user_app);
     }
 
     /**
@@ -63,7 +63,7 @@ class ApplicationsController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function show(\App\Models\App $application) {
-        return new Application($application);
+        return new ApplicationResource($application);
     }
 
     /**

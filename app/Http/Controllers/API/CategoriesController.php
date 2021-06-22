@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Category;
+use App\Http\Resources\CategoryResource;
 use Illuminate\Http\Request;
 
 class CategoriesController extends Controller {
@@ -14,14 +14,14 @@ class CategoriesController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $user_categories = $request->user()->categories;
+        $user_categories = $request->user()->categories()->ordered()->get();
 
         $globl_categories = \App\Models\Category::whereNotIn(
             'title', $user_categories->pluck('title')->values()
-        )->get();
+        )->ordered()->get();
 
-        return Category::collection( 
-            collect($globl_categories)->merge($user_categories)
+        return CategoryResource::collection( 
+            collect($globl_categories)->merge($user_categories)->sortBy('order_column')
          );
     }
 
@@ -45,14 +45,18 @@ class CategoriesController extends Controller {
                 'title' => $category->title,
                 'productivity' => $attr['productivity'],
             ]));
+
+            \App\Models\Category::setNewOrder([$user_category->id], $category['order_column']);
         } else {
-            \Auth::user()->categories()->updateOrCreate(
+            $user_category = \Auth::user()->categories()->updateOrCreate(
                 ['id' => $attr['category_id']],
                 ['productivity' => $attr['productivity']],
             );
         }
 
-        return new Category($user_category);
+        return new CategoryResource(
+            \App\Models\Category::find( $user_category->id )
+        );
     }
 
     /**
@@ -62,7 +66,7 @@ class CategoriesController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function show(\App\Models\Category $category) {
-        return new Category($category);
+        return new CategoryResource($category);
     }
 
     /**

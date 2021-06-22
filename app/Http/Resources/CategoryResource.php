@@ -4,8 +4,8 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class Application extends JsonResource {
-    
+class CategoryResource extends JsonResource {
+
     /**
      * Transform the resource into an array.
      *
@@ -13,6 +13,11 @@ class Application extends JsonResource {
      * @return array
      */
     public function toArray($request) {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'productivity' => $this->productivity,
+            'order_column' => $this->order_column,
+        ];
     }
 }

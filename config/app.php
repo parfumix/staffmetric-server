@@ -177,6 +177,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
+        Spatie\EloquentSortable\EloquentSortableServiceProvider::class,
 
     ],
 

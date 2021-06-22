@@ -17,6 +17,7 @@ class CreateAppsTable extends Migration {
             $table->bigInteger('user_id')->unsigned()->nullable()->default(null);
             $table->bigInteger('profile_id')->unsigned()->nullable()->default(null);
             $table->bigInteger('category_id')->unsigned();
+            $table->smallInteger('order_column')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')
