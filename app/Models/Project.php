@@ -21,7 +21,7 @@ class Project extends Model {
 
     protected $table = 'projects';
 
-    protected $fillable = ['remote_id', 'user_id', 'team_id', 'title', 'description', 'is_private', 'is_billable', 'time_budget', 'money_budget', 'budget_activated', 'deadline_at'];
+    protected $fillable = ['remote_id', 'user_id', 'title', 'description', 'is_private', 'is_billable', 'time_budget', 'money_budget', 'budget_activated', 'deadline_at'];
 
     public $timestamps = true;
 
@@ -48,14 +48,10 @@ class Project extends Model {
         return $this->belongsTo(User::class);
     }
 
-    public function team() {
-        return $this->belongsTo(Team::class);
-    }
-
     public function users() {
         return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id')
             ->using(ProjectUser::class)
-            ->withPivot('hourly_rate', 'role', 'limit_hours', 'team_id')
+            ->withPivot('hourly_rate', 'role', 'limit_hours')
             ->withTimestamps();
     }
 

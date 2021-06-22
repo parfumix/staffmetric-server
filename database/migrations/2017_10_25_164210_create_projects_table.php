@@ -18,7 +18,6 @@ class CreateProjectsTable extends Migration {
             
             $table->string('remote_id')->nullable()->default(null);
             $table->bigInteger('user_id')->unsigned();
-            $table->bigInteger('team_id')->unsigned()->nullable();
             $table->boolean('is_private')->default(0);
             $table->boolean('is_billable')->default(0);
             $table->integer('time_budget')->default(0);
@@ -27,10 +26,6 @@ class CreateProjectsTable extends Migration {
        
             $table->text('description')->nullable()->default(null);
             $table->date('deadline_at')->nullable();
-
-            $table->foreign('team_id')->references('id')->on('teams')
-                ->onDelete('set null')
-                ->onUpdate('cascade');
 
             $table->foreign('user_id')->references('id')->on('users')
                 ->onDelete('cascade')
