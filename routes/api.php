@@ -29,7 +29,7 @@ Route::post('/token/auth', [AuthController::class, 'token']);
 Route::post('/device/auth', [DeviceController::class, 'login']);
 
 // accepnt invite to team
-Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite']);
+Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite'])->name('teams.accept_invite');
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 

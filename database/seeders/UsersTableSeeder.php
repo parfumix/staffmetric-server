@@ -14,6 +14,11 @@ class UsersTableSeeder extends Seeder {
     public function run() {
         $admin = \App\Models\User::factory()->create();
         $admin->assignRole(\Spatie\Permission\Models\Role::where('name', 'admin')->first());
+        $team = \App\Models\Team::create([
+            'owner_id' => $admin->id,
+            'name' => 'Default team',
+        ]);
+        $admin->attachTeam($team);
         
         \App\Models\User::factory(5)->create()->each(function($user) use($admin) {
             $this->generateAnalyticsData($admin, $user);

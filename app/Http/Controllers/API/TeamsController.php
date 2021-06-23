@@ -14,7 +14,7 @@ class TeamsController extends Controller {
      * List team invites
      */
     public function invites(Request $request) {
-        return \App\Http\Resources\TeamInviteResource::collection( \Auth::invites() );
+        return \App\Http\Resources\TeamInviteResource::collection( \Auth::user()->invites );
     }
 
     /**
@@ -54,7 +54,7 @@ class TeamsController extends Controller {
      */
     public function resendInvite($invite_id) {
         $invite = TeamInvite::findOrFail($invite_id);
-        Mail::send('teamwork.emails.invite', ['team' => $invite->team, 'invite' => $invite], function ($m) use ($invite) {
+        Mail::send('emails.invite', ['team' => $invite->team, 'invite' => $invite], function ($m) use ($invite) {
             $m->to($invite->email)->subject('Invitation to join team ' . $invite->team->name);
         });
 
@@ -75,11 +75,11 @@ class TeamsController extends Controller {
         if (auth()->check()) {
             Teamwork::acceptInvite($invite);
 
-            return redirect()->route('teams.index');
+            return response()->json([
+                'message' => 'Successfully accepted'
+            ]);
         } else {
             session(['invite_token' => $token]);
-
-            return redirect()->to('login');
         }
     }
  
