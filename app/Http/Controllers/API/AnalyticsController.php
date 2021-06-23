@@ -302,9 +302,44 @@ class AnalyticsController extends Controller {
     }
 
     public function attendance(Request $request) {
+        $validated = $request->validate([
+            'week' => 'nullable',
+            'employee_id' => 'required|exists:App\Models\User,id',
+        ]);
+
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfWeek();
+        $end_at = $start_at->copy()->subWeek();
+        
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
+        });
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+
+        // check wether have access to employee
+        if(! in_array($validated['employee_id'], $employee_ids->keys()->toArray())) {
+            return response()->json([
+                'error' => 'Invalid employee'
+            ], 403);
+        }
+
+        $employer = \Auth::user();
+
+        $reportsService = app(\App\Services\ReportsService::class);
+        $data = $reportsService->getAttendanceAnalytics(
+            $employer->id, [$validated['employee_id']], $start_at, $end_at,
+        );
+
+        //TODO
+
+        $dates = generate_date_range($start_at, $end_at, 'day', 'D');
+
         return response()->json([
             'categories' => ['Clock In', 'Clock Out', 'Office Time', 'Pauses Time', 'Pauses'],
-            'users' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            'users' => $dates,
             'analytics' => [
                 'Monday' => [
                     'Clock In' => 123,

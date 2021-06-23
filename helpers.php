@@ -39,17 +39,19 @@ if(! function_exists('get_dates_by_interval')) {
 }
 
 if(! function_exists('generate_date_range')) {
-    function generate_date_range(Carbon $start_date, Carbon $end_date, $group = 'day') {
+    function generate_date_range(Carbon $start_date, Carbon $end_date, $group = 'day', $formatter = null) {
         $dates = [];
 
-        if($group == 'day') {
-            $formatter = 'Y-m-d';
-        } elseif ( $group == 'week' ) {
-            $formatter = 'Y/W';
-        } elseif ( $group == 'month' ) {
-            $formatter = 'Y-m';
-        } else {
-            $formatter = 'Y';
+        if(! $formatter) {
+            if($group == 'day') {
+                $formatter = 'Y-m-d';
+            } elseif ( $group == 'week' ) {
+                $formatter = 'Y/W';
+            } elseif ( $group == 'month' ) {
+                $formatter = 'Y-m';
+            } else {
+                $formatter = 'Y';
+            }
         }
 
         for($date = $start_date->copy(); $date->lte($end_date); $date->addDay()) {
@@ -63,7 +65,6 @@ if(! function_exists('generate_date_range')) {
 }
 
 if(! function_exists('hours_range')) {
-
     function hours_range($from = null, $to = null, $format = 'H a') {
         $dt = Carbon::createFromTime(0);
         $dt2 = $dt->copy()->addDay(1);

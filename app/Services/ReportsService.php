@@ -321,7 +321,26 @@ class ReportsService {
                 'user_id' => $item->user_id,
                 'name' => $item->name,
                 'burnout' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 100,
-                'engagment' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 100,
+                'engagment' => ($item->productive_secs - $item->idle_secs - $item->overtime_secs) / 100,
+            ];
+        });
+    }
+
+    public function getAttendanceAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'hour') {
+        $data = $this->getQueryAnalytics($employer_id, $employees, ['total_secs', 'idle_secs', 'idle_count', 'overtime_secs'], $start, $end, $groupBy)->get();
+
+        //TODO get first row for clock in
+        //TODO get last row for clock in
+        //TODO get sum for office time
+        //TODO get sum for pauses time
+        return $data->map(function ($item) use($groupBy) {
+            $groupBy = is_array($groupBy) ? $groupBy[0] : $groupBy;
+            return [
+                $groupBy => $item->{$groupBy},
+                'user_id' => $item->user_id,
+                'name' => $item->name,
+                'burnout' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 100,
+                'engagment' => ($item->productive_secs - $item->idle_secs - $item->overtime_secs) / 100,
             ];
         });
     }
