@@ -5,7 +5,7 @@ use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\SettingsController;
-use App\Http\Controllers\API\InviteController;
+use App\Http\Controllers\API\TeamsController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
 use App\Http\Controllers\API\UsersController;
@@ -27,6 +27,9 @@ use App\Http\Controllers\AuthController;
 // authenticate by device uuid
 Route::post('/token/auth', [AuthController::class, 'token']);
 Route::post('/device/auth', [DeviceController::class, 'login']);
+
+// accepnt invite to team
+Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite']);
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
@@ -54,7 +57,11 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     // adding burnout reports
 
     // adding invite route
-    Route::get('invite', [InviteController::class, 'invite']);
+    Route::prefix('teams')->group(function() {
+        Route::get('invites', [TeamsController::class, 'invites']);
+        Route::post('invite', [TeamsController::class, 'invite']);
+        Route::post('resend', [TeamsController::class, 'resendInvite']);
+    });
 
     // adding categories / applications
     Route::apiResource('categories', CategoriesController::class);
