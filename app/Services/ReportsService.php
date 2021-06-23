@@ -339,8 +339,6 @@ class ReportsService {
                 $groupBy => $item->{$groupBy},
                 'user_id' => $item->user_id,
                 'name' => $item->name,
-                'burnout' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 100,
-                'engagment' => ($item->productive_secs - $item->idle_secs - $item->overtime_secs) / 100,
             ];
         });
     }

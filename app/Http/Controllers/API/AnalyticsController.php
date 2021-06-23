@@ -309,7 +309,7 @@ class AnalyticsController extends Controller {
 
         // if not start_at, end_at set than use start of month
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfWeek();
-        $end_at = $start_at->copy()->subWeek();
+        $end_at = $start_at->copy()->addWeek();
         
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -332,8 +332,6 @@ class AnalyticsController extends Controller {
         $data = $reportsService->getAttendanceAnalytics(
             $employer->id, [$validated['employee_id']], $start_at, $end_at,
         );
-
-        //TODO
 
         $dates = generate_date_range($start_at, $end_at, 'day', 'D');
 
