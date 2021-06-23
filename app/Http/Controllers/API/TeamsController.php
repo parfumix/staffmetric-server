@@ -14,7 +14,7 @@ class TeamsController extends Controller {
      * List team invites
      */
     public function invites(Request $request) {
-        return \App\Http\Resources\TeamInviteResource::collection( \Auth::user()->invites );
+        return \App\Http\Resources\TeamInviteResource::collection( \Auth::user()->currentTeam->invites );
     }
 
     /**
