@@ -149,7 +149,6 @@ class AnalyticsController extends Controller {
             'users' => $users_analytics->pluck('name', 'user_id'),
             'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
         ]);
-
     }
 
     public function topApps(Request $request) {
@@ -211,6 +210,110 @@ class AnalyticsController extends Controller {
 
         return response()->json([
             'data' => $data
+        ]);
+    }
+
+    public function burnout(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
+            'groupBy' => 'nullable'
+        ]);
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
+        
+        $availableGroupBy = ['day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
+
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
+        });
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $data = $reportsService->getBurnoutAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+        );
+
+        $key = array_search($groupBy, $availableGroupBy);
+
+        return response()->json([
+            'categories' => $data->pluck(
+                $availableGroupBy[$key]
+            ),
+            'data' => [
+                'burnout' => $data->pluck('burnout'),
+                'engagment' => $data->pluck('engagment'),
+            ],
+        ]);
+    }
+
+    public function engagmentEmployees(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
+            'groupBy' => 'nullable'
+        ]);
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
+        
+        $availableGroupBy = ['day', 'week', 'month', 'year'];
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
+
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
+        });
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $for_categories = $reportsService->getBurnoutAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+        );
+
+        $users_analytics = $reportsService->getBurnoutAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
+        );
+
+        $key = array_search($groupBy, $availableGroupBy);
+
+        return response()->json([
+            'categories' => $for_categories->pluck(
+                $availableGroupBy[$key]
+            ),
+            'users' => $users_analytics->pluck('name', 'user_id'),
+            'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
+        ]);
+    }
+
+    public function attendance(Request $request) {
+        return response()->json([
+            'categories' => ['Clock In', 'Clock Out', 'Office Time', 'Pauses Time', 'Pauses'],
+            'users' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            'analytics' => [
+                'Monday' => [
+                    'Clock In' => 123,
+                    'Clock Out' => 123,
+                    'Office Time' => 123,
+                    'Pauses Time' => 123,
+                    'Pauses' => 123,
+                ]
+            ]
         ]);
     }
 }
