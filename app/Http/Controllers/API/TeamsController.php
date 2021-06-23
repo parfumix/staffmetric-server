@@ -74,13 +74,16 @@ class TeamsController extends Controller {
 
         if (auth()->check()) {
             Teamwork::acceptInvite($invite);
-
-            return response()->json([
-                'message' => 'Successfully accepted'
-            ]);
         } else {
-            session(['invite_token' => $token]);
+            $user = \App\Models\User::create([
+                'email' => $invite->email
+            ]);
+            $user->attachTeam($invite->team);
         }
+
+        return response()->json([
+            'message' => 'Successfully accepted'
+        ]);
     }
  
 }

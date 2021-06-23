@@ -28,9 +28,6 @@ use App\Http\Controllers\AuthController;
 Route::post('/token/auth', [AuthController::class, 'token']);
 Route::post('/device/auth', [DeviceController::class, 'login']);
 
-// accepnt invite to team
-Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite'])->name('teams.accept_invite');
-
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
     // get current authenticated user
@@ -60,7 +57,7 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     Route::prefix('teams')->group(function() {
         Route::get('invites', [TeamsController::class, 'invites']);
         Route::post('invite', [TeamsController::class, 'invite']);
-        Route::post('resend', [TeamsController::class, 'resendInvite']);
+        Route::post('resend-invite/{invite_id}', [TeamsController::class, 'resendInvite']);
     });
 
     // adding categories / applications
