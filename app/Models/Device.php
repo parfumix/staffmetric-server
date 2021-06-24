@@ -18,6 +18,8 @@ class Device extends Model {
 
     use SluggableScopeHelpers;
 
+    const DEVICE_OFFLINE_SECONDS = 900;
+
     protected $table = 'devices';
 
     protected $fillable = ['user_id', 'uuid', 'name', 'os', 'last_update_at'];
@@ -110,6 +112,20 @@ class Device extends Model {
      */
     public function getOs() {
         return $this->os;
+    }
+
+    /**
+     * Check wether device is offline
+     * 
+     */
+    public function isOnline($idle_seconds = self::DEVICE_OFFLINE_SECONDS) {
+        if(!$this->last_update_at) return false;
+        $seconds_from_last_activity = now()->diffInSeconds($this->last_update_at);
+
+        if(is_null($seconds_from_last_activity) || ! $seconds_from_last_activity)
+            return false;
+
+        return $seconds_from_last_activity <= $idle_seconds;
     }
 
     /**

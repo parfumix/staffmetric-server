@@ -32,7 +32,7 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
     // get current authenticated user
     Route::get('/user', function() {
-        return auth()->user();
+        return new \App\Http\Resources\UserResource(auth()->user());
     });
 
     // adding device routes

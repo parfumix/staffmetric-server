@@ -167,6 +167,15 @@ class User extends Authenticatable {
     }
 
     /**
+     * Check wether device is online
+     * 
+     */
+    public function isOnline() {
+        $device = $this->devices->first();
+        return $device ? $device->isOnline() : false;
+    }
+
+    /**
      * Get the route key for the model.
      *
      * @return string

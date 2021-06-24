@@ -13,6 +13,13 @@ class DeviceResource extends JsonResource {
      * @return array
      */
     public function toArray($request) {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'uuid' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'is_online' => $this->isOnline(),
+            'last_update_at' => $this->last_update_at,
+        ];
     }
 }
