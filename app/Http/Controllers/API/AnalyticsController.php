@@ -178,7 +178,8 @@ class AnalyticsController extends Controller {
         );
 
         return response()->json([
-            'data' => $data
+            'total' => $data->sum('duration'),
+            'apps' => $data
         ]);
     }
 
