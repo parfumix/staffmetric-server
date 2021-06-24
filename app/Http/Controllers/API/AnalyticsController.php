@@ -90,18 +90,16 @@ class AnalyticsController extends Controller {
                 'prev' => $prev_non_productive_secs,
             ],
 
-            'categories' => $current_period_data->pluck(
-                $availableGroupBy[$key]
-            ),
+            'categories' => $current_period_data->pluck($availableGroupBy[$key]),
             'prev_period_data' => [
-                'productive_secs' => $prev_period_data->pluck('productive_secs'),
-                'neutral_secs' => $prev_period_data->pluck('neutral_secs'),
-                'non_productive_secs' => $prev_period_data->pluck('non_productive_secs'),
+                'productive_secs' => $prev_period_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
+                'neutral_secs' => $prev_period_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
+                'non_productive_secs' => $prev_period_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
             ],
             'current_period_data' => [
-                'productive_secs' => $current_period_data->pluck('productive_secs'),
-                'neutral_secs' => $current_period_data->pluck('neutral_secs'),
-                'non_productive_secs' => $current_period_data->pluck('non_productive_secs'),
+                'productive_secs' => $current_period_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
+                'neutral_secs' => $current_period_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
+                'non_productive_secs' => $current_period_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
             ],
         ]);
     }

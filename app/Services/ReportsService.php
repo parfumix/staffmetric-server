@@ -271,7 +271,7 @@ class ReportsService {
             \DB::raw("user_id"),
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%H') as hour"),
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y-%m-%d') as day"),
-            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y/%V') as week"),
+            \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y-%V') as week"),
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y-%m') as month"),
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y') as year"),
         ]);
