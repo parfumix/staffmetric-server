@@ -327,18 +327,18 @@ class ReportsService {
     }
 
     public function getAttendanceAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'hour') {
-        $data = $this->getQueryAnalytics($employer_id, $employees, ['total_secs', 'idle_secs', 'idle_count', 'overtime_secs'], $start, $end, $groupBy)->get();
+        $data = $this->getQueryAnalytics($employer_id, $employees, ['total_secs', 'idle_secs', 'idle_count', 'overtime_secs'], $start, $end, $groupBy)->get()->groupBy('day');
 
-        //TODO get first row for clock in
-        //TODO get last row for clock in
-        //TODO get sum for office time
-        //TODO get sum for pauses time
-        return $data->map(function ($item) use($groupBy) {
-            $groupBy = is_array($groupBy) ? $groupBy[0] : $groupBy;
+        return $data->map(function ($item, $key) {
+            $first_clock_in = $item->first();
+            $last_clock_in = $item->last();
+
             return [
-                $groupBy => $item->{$groupBy},
-                'user_id' => $item->user_id,
-                'name' => $item->name,
+                'clock_in' => $first_clock_in->hour,
+                'clock_out' => $last_clock_in->hour,
+                'office_time' => $item->sum('total_secs'),
+                'pauses_time' => $item->sum('idle_secs'),
+                'pauses' => $item->sum('idle_count'),
             ];
         });
     }

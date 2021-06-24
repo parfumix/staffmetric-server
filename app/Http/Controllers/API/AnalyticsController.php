@@ -146,7 +146,7 @@ class AnalyticsController extends Controller {
             'categories' => $for_categories->pluck(
                 $availableGroupBy[$key]
             ),
-            'users' => $users_analytics->pluck('name', 'user_id'),
+            'users' => $users_analytics->pluck('name', 'user_id')->keys(),
             'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
         ]);
     }
@@ -296,14 +296,14 @@ class AnalyticsController extends Controller {
             'categories' => $for_categories->pluck(
                 $availableGroupBy[$key]
             ),
-            'users' => $users_analytics->pluck('name', 'user_id'),
+            'users' => $users_analytics->pluck('name', 'user_id')->keys(),
             'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
         ]);
     }
 
     public function attendance(Request $request) {
         $validated = $request->validate([
-            'week' => 'nullable',
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'employee_id' => 'required|exists:App\Models\User,id',
         ]);
 
@@ -330,23 +330,15 @@ class AnalyticsController extends Controller {
 
         $reportsService = app(\App\Services\ReportsService::class);
         $data = $reportsService->getAttendanceAnalytics(
-            $employer->id, [$validated['employee_id']], $start_at, $end_at,
+            $employer->id, [$validated['employee_id']], $start_at, $end_at, ['day', 'hour']
         );
 
-        $dates = generate_date_range($start_at, $end_at, 'day', 'D');
+        $dates = generate_date_range($start_at, $end_at, 'day', 'Y-m-d');
 
         return response()->json([
-            'categories' => ['Clock In', 'Clock Out', 'Office Time', 'Pauses Time', 'Pauses'],
+            'categories' => array_keys($data->first()),
             'users' => $dates,
-            'analytics' => [
-                'Monday' => [
-                    'Clock In' => 123,
-                    'Clock Out' => 123,
-                    'Office Time' => 123,
-                    'Pauses Time' => 123,
-                    'Pauses' => 123,
-                ]
-            ]
+            'analytics' => $data
         ]);
     }
 }
