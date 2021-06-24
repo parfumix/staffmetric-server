@@ -25,8 +25,8 @@ use App\Http\Controllers\AuthController;
 */
 
 // authenticate by device uuid
-Route::post('/token/auth', [AuthController::class, 'token']);
-Route::post('/device/auth', [DeviceController::class, 'login']);
+Route::post('/token/auth', [AuthController::class, 'token']); //used for local testing
+Route::post('/device/auth', [DeviceController::class, 'login']); //used for client device auth
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
