@@ -16,7 +16,7 @@ use App\Http\Controllers\API\TeamsController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/nova');
 });
 
 Route::post('/login', [AuthController::class, 'login']);
