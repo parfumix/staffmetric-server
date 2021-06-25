@@ -31,9 +31,8 @@ class TeamsController extends Controller {
 
         if (!Teamwork::hasPendingInvite($request->email, $team)) {
             Teamwork::inviteToTeam($request->email, $team, function ($invite) {
-                Mail::send('emails.invite', ['team' => $invite->team, 'invite' => $invite], function ($m) use ($invite) {
-                    $m->to($invite->email)->subject('Invitation to join workspace ' . $invite->team->name);
-                });
+                Mail::to($invite->email)
+                    ->send(new \App\Mail\TeamInvite($invite));
             });
         } else {
             return response()->json([
