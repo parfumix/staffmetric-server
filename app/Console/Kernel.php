@@ -36,12 +36,12 @@ class Kernel extends ConsoleKernel {
         // calculate top apps each day
         $schedule->command('staffmetric:top_apps')
             ->daily()
-            ->appendOutputTo( storage_path('top_apps.log') );
+            ->appendOutputTo( storage_path('logs/top_apps.log') );
 
         // each day add new apps to apps table
         $schedule->command('staffmetric:apps')
             ->daily()
-            ->appendOutputTo( storage_path('apps.log') );
+            ->appendOutputTo( storage_path('logs/apps.log') );
     }
 
     /**

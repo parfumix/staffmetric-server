@@ -41,22 +41,24 @@ class DeviceController extends Controller {
         ]);
 
         //TODO if present token id than we should authenticate by token ID
-
         $device = \App\Models\Device::ofUuid( $attr['uuid'] )->get()->first();
 
         if(! $device) {
             $user = \App\Models\User::create([
-                'profile_id' => \App\Models\Profile::first()->id,
                 'name' => $attr['os'],
                 'email' => $attr['uuid'] . '@mail.com',
                 'password' => bcrypt('secret'),
             ]);
 
+            $user->profile()->associate(
+                \App\Models\Profile::first()
+            );
+
             $user->markEmailAsVerified();
 
             $employer = \App\Models\User::find($attr['employer_id']);
 
-            $employer->employees()->attach($user->id);
+            $employer->employees()->attach($user->id, ['status' => 'accepted']);
         }
 
         return response()->json([
