@@ -46,6 +46,7 @@ class DeviceController extends Controller {
 
         if(! $device) {
             $user = \App\Models\User::create([
+                'profile_id' => \App\Models\Profile::first()->id,
                 'name' => $attr['os'],
                 'email' => $attr['uuid'] . '@mail.com',
                 'password' => bcrypt('secret'),

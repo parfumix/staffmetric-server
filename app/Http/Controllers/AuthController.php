@@ -16,6 +16,7 @@ class AuthController extends Controller {
         ]);
 
         $user = User::create([
+            'profile_id' => \App\Models\Profile::first()->id,
             'name' => $attr['name'],
             'password' => bcrypt($attr['password']),
             'email' => $attr['email'],

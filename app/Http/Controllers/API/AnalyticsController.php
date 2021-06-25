@@ -335,7 +335,7 @@ class AnalyticsController extends Controller {
         $dates = generate_date_range($start_at, $end_at, 'day', 'Y-m-d');
 
         return response()->json([
-            'categories' => array_keys($data->first()),
+            'categories' => ['clock_in', 'clock_out', 'office_time', 'pauses_time', 'pauses'],
             'users' => $dates,
             'analytics' => $data
         ]);
