@@ -22,7 +22,8 @@ class Kernel extends ConsoleKernel {
      * @return void
      */
     protected function schedule(Schedule $schedule) {
-        
+        $schedule->command('telescope:prune')->daily();
+
         // notify if uncategorized apps
         $schedule->command('staffmetric:uncategorized')
             ->weekly()->at('09:00');
