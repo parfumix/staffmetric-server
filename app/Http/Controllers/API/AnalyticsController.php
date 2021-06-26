@@ -8,10 +8,6 @@ use Carbon\Carbon;
 
 class AnalyticsController extends Controller {
     
-    /**
-     * Reports by productivity
-     * 
-     */
     public function productivity(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
@@ -26,8 +22,8 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
-        $availableGroupBy = ['day', 'week', 'month', 'year'];
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
+        $dateRanges = generate_date_range($start_at, $end_at, $groupBy);
 
         //calculate prev time
         if( $groupBy == 'year' ) {
@@ -55,26 +51,40 @@ class AnalyticsController extends Controller {
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
-        );
+        )->groupBy($groupBy);
 
         $current_period_data = $reportsService->getProductivityAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
-        );
+        )->groupBy($groupBy);
+
+        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data) {
+            return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
+                'productive_secs' => 0,
+                'neutral_secs' => 0,
+                'non_productive_secs' => 0,
+            ];
+        });
+
+        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data) {
+            return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
+                'productive_secs' => 0,
+                'neutral_secs' => 0,
+                'non_productive_secs' => 0,
+            ];
+        });
 
         // calculate current metrics
-        $current_productive_secs = $current_period_data->pluck('productive_secs')->sum();
-        $current_non_productive_secs = $current_period_data->pluck('non_productive_secs')->sum();
-        $current_neutral_secs = $current_period_data->pluck('neutral_secs')->sum();
+        $current_productive_secs = $formatted_current_data->pluck('productive_secs')->sum();
+        $current_non_productive_secs = $formatted_current_data->pluck('non_productive_secs')->sum();
+        $current_neutral_secs = $formatted_current_data->pluck('neutral_secs')->sum();
         $current_total_secs = $current_productive_secs + $current_non_productive_secs + $current_neutral_secs;
 
 
         // calculate prev metrics
-        $prev_productive_secs = $prev_period_data->pluck('productive_secs')->sum();
-        $prev_non_productive_secs = $prev_period_data->pluck('non_productive_secs')->sum();
-        $prev_neutral_secs = $prev_period_data->pluck('neutral_secs')->sum();
+        $prev_productive_secs = $formatted_prev_data->pluck('productive_secs')->sum();
+        $prev_non_productive_secs = $formatted_prev_data->pluck('non_productive_secs')->sum();
+        $prev_neutral_secs = $formatted_prev_data->pluck('neutral_secs')->sum();
         $prev_total_secs = $prev_productive_secs + $prev_non_productive_secs + $prev_neutral_secs;
-
-        $key = array_search($groupBy, $availableGroupBy);
 
         return response()->json([
             'total_secs' => [
@@ -90,16 +100,16 @@ class AnalyticsController extends Controller {
                 'prev' => $prev_non_productive_secs,
             ],
 
-            'categories' => $current_period_data->pluck($availableGroupBy[$key]),
+            'categories' => $dateRanges,
             'prev_period_data' => [
-                'productive_secs' => $prev_period_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
-                'neutral_secs' => $prev_period_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
-                'non_productive_secs' => $prev_period_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
+                'productive_secs' => $formatted_prev_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
+                'neutral_secs' => $formatted_prev_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
+                'non_productive_secs' => $formatted_prev_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
             ],
             'current_period_data' => [
-                'productive_secs' => $current_period_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
-                'neutral_secs' => $current_period_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
-                'non_productive_secs' => $current_period_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
+                'productive_secs' => $formatted_current_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
+                'neutral_secs' => $formatted_current_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
+                'non_productive_secs' => $formatted_current_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
             ],
         ]);
     }
@@ -118,7 +128,6 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
-        $availableGroupBy = ['day', 'week', 'month', 'year'];
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
         //TODO check if manager through employeer get access to employees
@@ -130,21 +139,13 @@ class AnalyticsController extends Controller {
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
-        $for_categories = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
-        );
-
         $users_analytics = $reportsService->getProductivityAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
         );
 
-        $key = array_search($groupBy, $availableGroupBy);
-
         return response()->json([
-            'categories' => $for_categories->pluck(
-                $availableGroupBy[$key]
-            ),
-            'users' => $users_analytics->pluck('name', 'user_id')->keys(),
+            'categories' => generate_date_range($start_at, $end_at, $groupBy),
+            'users' => $employee_ids->keys()->reject(function($el) use($validated) { return isset($validated['employees']) && count($validated['employees']) ? !in_array($el, $validated['employees']) : false; }),
             'analytics' => $users_analytics->groupBy(['user_id', $groupBy])
         ]);
     }
