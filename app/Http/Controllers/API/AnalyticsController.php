@@ -49,16 +49,28 @@ class AnalyticsController extends Controller {
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
+        $fields_to_select = [
+            'email_secs' => ['title' => 'Email time', 'description' => 'Email time'],
+            'social_network_secs' => ['title' => 'Social network time', 'description' => 'Social network time'],
+            'idle_secs' => ['title' => 'Pauses time', 'description' => 'Pauses time'],
+            'productive_secs' => ['title' => 'Productive time', 'description' => 'Productive time'],
+            'neutral_secs' => ['title' => 'Neutral time', 'description' => 'Neutral time'],
+            'non_productive_secs' => ['title' => 'Non Productive Time', 'description' => 'Non Productive Time'],
+        ];
+
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
+            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy, array_keys($fields_to_select)
         )->groupBy($groupBy);
 
         $current_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy, array_keys($fields_to_select)
         )->groupBy($groupBy);
 
         $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data) {
             return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
+                'email_secs' => 0,
+                'social_network_secs' => 0,
+                'idle_secs' => 0,
                 'productive_secs' => 0,
                 'neutral_secs' => 0,
                 'non_productive_secs' => 0,
@@ -67,39 +79,25 @@ class AnalyticsController extends Controller {
 
         $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data) {
             return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
+                'email_secs' => 0,
+                'social_network_secs' => 0,
+                'idle_secs' => 0,
                 'productive_secs' => 0,
                 'neutral_secs' => 0,
                 'non_productive_secs' => 0,
             ];
         });
 
-        // calculate current metrics
-        $current_productive_secs = $formatted_current_data->pluck('productive_secs')->sum();
-        $current_non_productive_secs = $formatted_current_data->pluck('non_productive_secs')->sum();
-        $current_neutral_secs = $formatted_current_data->pluck('neutral_secs')->sum();
-        $current_total_secs = $current_productive_secs + $current_non_productive_secs + $current_neutral_secs;
-
-
-        // calculate prev metrics
-        $prev_productive_secs = $formatted_prev_data->pluck('productive_secs')->sum();
-        $prev_non_productive_secs = $formatted_prev_data->pluck('non_productive_secs')->sum();
-        $prev_neutral_secs = $formatted_prev_data->pluck('neutral_secs')->sum();
-        $prev_total_secs = $prev_productive_secs + $prev_non_productive_secs + $prev_neutral_secs;
+        $metrics = [];
+        foreach ($fields_to_select as $key => $item) {
+            $metrics[$key]['title'] = $item['title'];    
+            $metrics[$key]['description'] = $item['description'];    
+            $metrics[$key]['current'] = $formatted_current_data->pluck($key)->sum();    
+            $metrics[$key]['prev'] = $formatted_prev_data->pluck($key)->sum();    
+        }
 
         return response()->json([
-            'total_secs' => [
-                'current' => $current_total_secs,
-                'prev' => $prev_total_secs,
-            ],
-            'productive_secs' => [
-                'current' => $current_productive_secs,
-                'prev' => $prev_productive_secs,
-            ],
-            'non_productive_secs' => [
-                'current' => $current_non_productive_secs,
-                'prev' => $prev_non_productive_secs,
-            ],
-
+            'metrics' => $metrics,
             'categories' => $dateRanges,
             'prev_period_data' => [
                 'productive_secs' => $formatted_prev_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
@@ -107,9 +105,9 @@ class AnalyticsController extends Controller {
                 'non_productive_secs' => $formatted_prev_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
             ],
             'current_period_data' => [
-                'productive_secs' => $formatted_current_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
                 'neutral_secs' => $formatted_current_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
-                'non_productive_secs' => $formatted_current_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
+                'productive_secs' => $formatted_current_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
+                'non_productive_secs' => $formatted_current_data->pluck('non_productive_secs')->map(function($el) { return 0 - intval($el); }),
             ],
         ]);
     }
@@ -139,8 +137,10 @@ class AnalyticsController extends Controller {
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
+        $fields_to_select = ['productive_secs', 'neutral_secs', 'non_productive_secs'];
+
         $users_analytics = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
         );
 
         return response()->json([
@@ -170,10 +170,9 @@ class AnalyticsController extends Controller {
                 : false;
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
 
         $data = $reportsService->getTopApps(
-            $employee_ids->keys()->toArray(), $start_at, $end_at
+            $employee_ids->keys()->toArray(), $start_at, $end_at, null, 6
         );
 
         return response()->json([
@@ -202,7 +201,6 @@ class AnalyticsController extends Controller {
                 : false;
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
 
         $data = $reportsService->getTopCategories(
             $employee_ids->keys()->toArray(), $start_at, $end_at

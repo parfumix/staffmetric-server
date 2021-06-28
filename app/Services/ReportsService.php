@@ -302,8 +302,8 @@ class ReportsService {
         return $query;
     }
 
-    public function getProductivityAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'month') {
-        return $this->getQueryAnalytics($employer_id, $employees, ['productive_secs', 'neutral_secs', 'non_productive_secs'], $start, $end, $groupBy)->get();
+    public function getProductivityAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'month', $fields_to_select = []) {
+        return $this->getQueryAnalytics($employer_id, $employees, $fields_to_select, $start, $end, $groupBy)->get();
     }
 
     public function getEmailAnalytics($employer_id, array $employees = [], Carbon $start, Carbon $end, $groupBy = 'hour') {
