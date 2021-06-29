@@ -25,8 +25,8 @@ class Kernel extends ConsoleKernel {
         $schedule->command('telescope:prune')->daily();
 
         // notify if uncategorized apps
-        $schedule->command('staffmetric:uncategorized')
-            ->weekly()->at('09:00');
+        // $schedule->command('staffmetric:uncategorized')
+        //     ->weekly()->at('09:00');
             
         // on hourly basis update analytics table
         $schedule->command('staffmetric:analytics')
