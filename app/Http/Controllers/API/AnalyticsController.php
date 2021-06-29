@@ -52,7 +52,7 @@ class AnalyticsController extends Controller {
         $fields_to_select = [
             'email_secs' => ['title' => 'Email time', 'description' => 'Email time'],
             'social_network_secs' => ['title' => 'Social network time', 'description' => 'Social network time'],
-            'idle_secs' => ['title' => 'Pauses time', 'description' => 'Pauses time'],
+            //'idle_secs' => ['title' => 'Pauses time', 'description' => 'Pauses time'],
             'productive_secs' => ['title' => 'Productive time', 'description' => 'Productive time'],
             'neutral_secs' => ['title' => 'Neutral time', 'description' => 'Neutral time'],
             'non_productive_secs' => ['title' => 'Non Productive Time', 'description' => 'Non Productive Time'],
@@ -70,7 +70,7 @@ class AnalyticsController extends Controller {
             return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
                 'email_secs' => 0,
                 'social_network_secs' => 0,
-                'idle_secs' => 0,
+                //'idle_secs' => 0,
                 'productive_secs' => 0,
                 'neutral_secs' => 0,
                 'non_productive_secs' => 0,
@@ -81,7 +81,7 @@ class AnalyticsController extends Controller {
             return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
                 'email_secs' => 0,
                 'social_network_secs' => 0,
-                'idle_secs' => 0,
+                //'idle_secs' => 0,
                 'productive_secs' => 0,
                 'neutral_secs' => 0,
                 'non_productive_secs' => 0,
