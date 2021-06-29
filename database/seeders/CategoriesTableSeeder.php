@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Symfony\Component\Yaml\Yaml;
 
 class CategoriesTableSeeder extends Seeder {
 
@@ -12,23 +13,15 @@ class CategoriesTableSeeder extends Seeder {
      * @return void
      */
     public function run() {
-        $categories = [
-            'General' => 'productive',
-            'Business' => 'productive',
-            'Entertainment' => 'productive',
-            'Accounting' => 'productive',
-            'Administration' => 'productive',
-            'Sales' => 'productive',
-            'Marketing' => 'productive',
-            'Customer Relations' => 'productive',
-            'Intelligence' => 'productive',
-            'Project Management' => 'productive',
-            'Social' => 'non-productive',
-            'Email' => 'productive',
-        ];
+        $categories = Yaml::parse(file_get_contents(storage_path('categories.yaml')));
 
-        foreach ($categories as $category => $productivity) {
-            \App\Models\Category::create(['user_id' => null, 'title' => $category, 'productivity' => $productivity,]);
+        foreach ($categories as $item) {
+            $category = \App\Models\Category::create(['user_id' => null, 'title' => $item['title'], 'productivity' => $item['productivity'],]);
+            if( isset($item['apps']) ) {
+                foreach($item['apps'] as $app) {
+                    \App\Models\App::create(['user_id' => null, 'profile_id' => null, 'name' => $app['name'], 'category_id' => $category->id,]);
+                }
+            }
         }
     }
 }

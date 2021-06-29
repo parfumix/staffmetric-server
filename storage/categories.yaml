@@ -1,0 +1,20 @@
+---
+
+- title: General
+  productivity: productive
+  apps:
+
+- title: Business
+  productivity: productive
+  apps:
+  - name: gmail.com
+
+- title: Entertainment
+  productivity: non-productive
+  apps:
+  - name: facebook.com
+
+- title: Email
+  productivity: productive
+  apps:
+  - name: gmail.com
