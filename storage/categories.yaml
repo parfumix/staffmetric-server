@@ -13,8 +13,17 @@
   productivity: non-productive
   apps:
   - name: facebook.com
+  - name: instagram.com
+  - name: vk.com
+  - name: twitter.com
+  - name: youtube.com
+  - name: pinterest.com
+  - name: tumblr.com
 
 - title: Email
   productivity: productive
   apps:
   - name: gmail.com
+  - name: mail.ru
+  - name: mail.com
+  - name: mail.google.com
