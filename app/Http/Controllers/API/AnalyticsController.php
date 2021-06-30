@@ -13,8 +13,17 @@ class AnalyticsController extends Controller {
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
             'employees' => 'nullable|array|exists:App\Models\User,id',
-            'groupBy' => 'nullable'
+            'groupBy' => 'nullable',
+            'fields' => 'nullable|array'
         ]);
+
+        $fields_to_select = $validated['fields'] ?? [
+            'email_secs',
+            'social_network_secs',
+            'productive_secs',
+            'neutral_secs',
+            'non_productive_secs',
+        ];
 
         $reportsService = app(\App\Services\ReportsService::class);
 
@@ -49,66 +58,45 @@ class AnalyticsController extends Controller {
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
 
-        $fields_to_select = [
-            'email_secs' => ['title' => 'Email time', 'description' => 'Includes all emails websites.'],
-            'social_network_secs' => ['title' => 'Social network time', 'description' => 'Includes all social websites.'],
-            //'idle_secs' => ['title' => 'Pauses time', 'description' => 'Pauses time'],
-            'productive_secs' => ['title' => 'Productive time', 'description' => 'Only Web/Apps marked as productive.'],
-            'neutral_secs' => ['title' => 'Neutral time', 'description' => 'Only Web/Apps marked as neutral.'],
-            'non_productive_secs' => ['title' => 'Non Productive Time', 'description' => 'Only Web/Apps marked as non-productive.'],
-        ];
-
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy, array_keys($fields_to_select)
+            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy, $fields_to_select
         )->groupBy($groupBy);
 
         $current_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy, array_keys($fields_to_select)
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy, $fields_to_select
         )->groupBy($groupBy);
 
-        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data) {
-            return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
-                'email_secs' => 0,
-                'social_network_secs' => 0,
-                //'idle_secs' => 0,
-                'productive_secs' => 0,
-                'neutral_secs' => 0,
-                'non_productive_secs' => 0,
-            ];
+        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data, $fields_to_select) {
+            return $current_period_data->get($date) ? (array)$current_period_data->get($date)->first() : collect($fields_to_select)->mapWithKeys(function($field) {
+                return [$field => 0];
+            })->toArray();
         });
 
-        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data) {
-            return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
-                'email_secs' => 0,
-                'social_network_secs' => 0,
-                //'idle_secs' => 0,
-                'productive_secs' => 0,
-                'neutral_secs' => 0,
-                'non_productive_secs' => 0,
-            ];
+        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data, $fields_to_select) {
+            return $prev_period_data->get($date) ? (array)$prev_period_data->get($date)->first() : collect($fields_to_select)->mapWithKeys(function($field) {
+                return [$field => 0];
+            })->toArray();
         });
 
-        $metrics = [];
-        foreach ($fields_to_select as $key => $item) {
-            $metrics[$key]['title'] = $item['title'];    
-            $metrics[$key]['description'] = $item['description'];    
-            $metrics[$key]['current'] = $formatted_current_data->pluck($key)->sum();    
-            $metrics[$key]['prev'] = $formatted_prev_data->pluck($key)->sum();    
+        $sumValues = [];
+        foreach ($fields_to_select as $value) {
+            $sumValues[$value]['current'] = $formatted_current_data->pluck($value)->sum();    
+            $sumValues[$value]['prev'] = $formatted_prev_data->pluck($value)->sum();    
         }
 
+        $prev_period_data = collect($fields_to_select)->mapWithKeys(function ($item) use($formatted_prev_data) {
+            return [$item => $formatted_prev_data->pluck($item)->map(function($el) { return intval($el); })];
+        });
+
+        $current_period_data = collect($fields_to_select)->mapWithKeys(function ($item) use($formatted_current_data) {
+            return [$item => $formatted_current_data->pluck($item)->map(function($el) { return intval($el); })];
+        });
+
         return response()->json([
-            'metrics' => $metrics,
+            'total' => $sumValues,
             'categories' => $dateRanges,
-            'prev_period_data' => [
-                'productive_secs' => $formatted_prev_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
-                'neutral_secs' => $formatted_prev_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
-                'non_productive_secs' => $formatted_prev_data->pluck('non_productive_secs')->map(function($el) { return intval($el); }),
-            ],
-            'current_period_data' => [
-                'neutral_secs' => $formatted_current_data->pluck('neutral_secs')->map(function($el) { return intval($el); }),
-                'productive_secs' => $formatted_current_data->pluck('productive_secs')->map(function($el) { return intval($el); }),
-                'non_productive_secs' => $formatted_current_data->pluck('non_productive_secs')->map(function($el) { return 0 - intval($el); }),
-            ],
+            'prev_period_data' => $prev_period_data,
+            'current_period_data' => $current_period_data,
         ]);
     }
 
