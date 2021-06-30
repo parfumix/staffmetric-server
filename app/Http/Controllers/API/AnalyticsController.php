@@ -50,12 +50,12 @@ class AnalyticsController extends Controller {
         $employer = \Auth::user();
 
         $fields_to_select = [
-            'email_secs' => ['title' => 'Email time', 'description' => 'Email time'],
-            'social_network_secs' => ['title' => 'Social network time', 'description' => 'Social network time'],
+            'email_secs' => ['title' => 'Email time', 'description' => 'Includes all emails websites.'],
+            'social_network_secs' => ['title' => 'Social network time', 'description' => 'Includes all social websites.'],
             //'idle_secs' => ['title' => 'Pauses time', 'description' => 'Pauses time'],
-            'productive_secs' => ['title' => 'Productive time', 'description' => 'Productive time'],
-            'neutral_secs' => ['title' => 'Neutral time', 'description' => 'Neutral time'],
-            'non_productive_secs' => ['title' => 'Non Productive Time', 'description' => 'Non Productive Time'],
+            'productive_secs' => ['title' => 'Productive time', 'description' => 'Only Web/Apps marked as productive.'],
+            'neutral_secs' => ['title' => 'Neutral time', 'description' => 'Only Web/Apps marked as neutral.'],
+            'non_productive_secs' => ['title' => 'Non Productive Time', 'description' => 'Only Web/Apps marked as non-productive.'],
         ];
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
