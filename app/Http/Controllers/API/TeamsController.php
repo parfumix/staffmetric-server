@@ -67,6 +67,7 @@ class TeamsController extends Controller {
      */
     public function acceptInvite($token) {
         $invite = Teamwork::getInviteFromAcceptToken($token);
+
         if (!$invite) {
             abort(404);
         }
@@ -75,9 +76,16 @@ class TeamsController extends Controller {
             Teamwork::acceptInvite($invite);
         } else {
             $user = \App\Models\User::create([
-                'email' => $invite->email
+                'email' => $invite->email,
+                'password' => bcrypt('secret')
             ]);
+            
             $user->attachTeam($invite->team);
+
+            // sending welcome message 
+            Mail::send('emails.welcome', ['user' => $user, 'password' => 'secret'], function ($m) use ($user) {
+                $m->to($user->email)->subject('Welcome, ' . $user->name);
+            });
         }
 
         return response()->json([

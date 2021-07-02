@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\API\TeamsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,5 +25,3 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-// accepnt invite to team
-Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite'])->name('teams.accept_invite');
