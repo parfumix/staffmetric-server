@@ -17,13 +17,8 @@ class AnalyticsController extends Controller {
             'fields' => 'nullable|array'
         ]);
 
-        $fields_to_select = $validated['fields'] ?? [
-            'email_secs',
-            'social_network_secs',
-            'productive_secs',
-            'neutral_secs',
-            'non_productive_secs',
-        ];
+        $fields_to_select = $validated['fields'] ?? 
+            ['email_secs', 'social_network_secs', 'productive_secs', 'neutral_secs', 'non_productive_secs'];
 
         $reportsService = app(\App\Services\ReportsService::class);
 
@@ -32,7 +27,9 @@ class AnalyticsController extends Controller {
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
-        $dateRanges = generate_date_range($start_at, $end_at, $groupBy);
+        $dateRanges = $groupBy == 'hour'
+            ? hours_range(9, 20, 'H')
+            : generate_date_range($start_at, $end_at, $groupBy);
 
         //calculate prev time
         if( $groupBy == 'year' ) {
@@ -47,6 +44,9 @@ class AnalyticsController extends Controller {
         } elseif ( $groupBy == 'day' ) {
             $prev_start_at = $start_at->copy()->subDay();
             $prev_end_at = $end_at->copy()->subDay();
+        } elseif ( $groupBy == 'hour' ) {
+            $prev_start_at = $start_at->copy()->subDay()->startOfDay();
+            $prev_end_at = $end_at->copy()->subDay()->endOfDay();
         }
 
         //TODO check if manager through employeer get access to employees
@@ -59,41 +59,44 @@ class AnalyticsController extends Controller {
         $employer = \Auth::user();
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy, $fields_to_select
-        )->groupBy($groupBy);
+            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, [$groupBy, 'user_id'], $fields_to_select
+        )->groupBy([$groupBy, 'user_id']);
 
         $current_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy, $fields_to_select
-        )->groupBy($groupBy);
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
+        )->groupBy([$groupBy, 'user_id']);
 
-        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data, $fields_to_select) {
-            return $current_period_data->get($date) ? (array)$current_period_data->get($date)->first() : collect($fields_to_select)->mapWithKeys(function($field) {
-                return [$field => 0];
-            })->toArray();
-        });
+        $formatted_current_data = [];
+        $formatted_prev_data = [];
+        foreach ($employee_ids->keys() as $employee_id) {
+            foreach($dateRanges as $date) {
+                $defaultvalues = collect($fields_to_select)->mapWithKeys(function($field) {
+                    return [$field => 0];
+                })->toArray();
 
-        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data, $fields_to_select) {
-            return $prev_period_data->get($date) ? (array)$prev_period_data->get($date)->first() : collect($fields_to_select)->mapWithKeys(function($field) {
-                return [$field => 0];
-            })->toArray();
-        });
+                // build current data
+                $value_selected = $current_period_data->get($date, collect([]))->get($employee_id);
+                $formatted_current_data[$employee_id][$date] = $value_selected ? (array)$value_selected->first() : $defaultvalues;
 
-        $sumValues = [];
-        foreach ($fields_to_select as $value) {
-            $sumValues[$value]['current'] = $formatted_current_data->pluck($value)->sum();    
-            $sumValues[$value]['prev'] = $formatted_prev_data->pluck($value)->sum();    
+                // build prev data
+                $prev_value_selected = $prev_period_data->get($date, collect([]))->get($employee_id);
+                $formatted_prev_data[$employee_id][$date] = $prev_value_selected ? (array)$prev_value_selected->first() : $defaultvalues;
+            }
         }
 
-        $prev_period_data = collect($fields_to_select)->mapWithKeys(function ($item) use($formatted_prev_data) {
-            return [$item => $formatted_prev_data->pluck($item)->map(function($el) { return intval($el); })];
-        });
+        $current_period_data = [];
+        $prev_period_data = [];
+        foreach ($fields_to_select as $field) {
+            foreach ($formatted_current_data as $emplyoee_id => $items) {
+                $current_period_data[$field][$emplyoee_id] = collect($items)->pluck($field)->map(function($el) { return intval($el); })->toArray();
+            }
 
-        $current_period_data = collect($fields_to_select)->mapWithKeys(function ($item) use($formatted_current_data) {
-            return [$item => $formatted_current_data->pluck($item)->map(function($el) { return intval($el); })];
-        });
+            foreach ($formatted_prev_data as $emplyoee_id => $prev_items) {
+                $prev_period_data[$field][$emplyoee_id] = collect($prev_items)->pluck($field)->map(function($el) { return intval($el); })->toArray();
+            }
+        }
 
         return response()->json([
-            'total' => $sumValues,
             'categories' => $dateRanges,
             'prev_period_data' => $prev_period_data,
             'current_period_data' => $current_period_data,
