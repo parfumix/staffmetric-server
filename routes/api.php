@@ -9,8 +9,10 @@ use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\ProfilesController;
+use App\Http\Controllers\API\GoalsController;
 use App\Http\Controllers\API\AutomationsController;
 use App\Http\Controllers\AuthController;
+use App\Models\Goal;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +68,7 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     });
 
     // adding categories / applications
+    Route::apiResource('goals', GoalsController::class);
     Route::apiResource('categories', CategoriesController::class);
     Route::apiResource('applications', ApplicationsController::class);
 

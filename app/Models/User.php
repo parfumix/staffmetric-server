@@ -126,6 +126,14 @@ class User extends Authenticatable {
         return $this->hasMany(Workspace::class);
     }
 
+    /**
+     * Get goals
+     * 
+     */
+    public function goals() {
+        return $this->hasMany(Goal::class);
+    }
+
     /** Get users in relation with current user . */
     public function employees($status = null) {
         $query =  $this->belongsToMany(User::class, 'user_employee', 'user_id', 'employee_id')
