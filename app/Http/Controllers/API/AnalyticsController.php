@@ -18,7 +18,7 @@ class AnalyticsController extends Controller {
         ]);
 
         $fields_to_select = $validated['fields'] ?? 
-            ['email_secs', 'social_network_secs', 'productive_secs', 'neutral_secs', 'non_productive_secs'];
+            ['email_secs', 'social_network_secs', 'productive_secs', 'neutral_secs', 'non_productive_secs', 'total_secs'];
 
         $reportsService = app(\App\Services\ReportsService::class);
 
