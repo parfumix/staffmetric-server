@@ -267,6 +267,7 @@ class ReportsService {
         $query = \DB::table('analytics')
             ->where('analytics.employer_id', $employer_id);
 
+        // used for groupping data
         $query->select([
             \DB::raw("user_id"),
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%H') as hour"),
@@ -276,18 +277,23 @@ class ReportsService {
             \DB::raw("DATE_FORMAT(analytics.employee_time, '%Y') as year"),
         ]);
 
+        // sum selected columns
         $columns = (array)$columns;
         foreach ($columns as $column) {
             $query->addSelect(\DB::raw("IFNULL(SUM(analytics.{$column}), 0) as {$column}"));
         }
 
+        // select meta data as user, profile data
         $query->whereIn('analytics.user_id', $employees)
             ->leftJoin('users', 'users.id', '=', 'analytics.user_id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'users.profile_id')
             ->addSelect([
                 \DB::raw('users.name as name'),
                 \DB::raw('users.email as email'),
+                \DB::raw('profiles.title as profile'),
             ]);
 
+        // select by date
         if(! is_null($start)) {
             $query->whereDate('analytics.employee_time', '>=', $start->format('Y-m-d'));
         }
