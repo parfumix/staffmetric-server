@@ -13,21 +13,7 @@ class GoalsController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $validated = $request->validate([
-            'employees' => 'nullable|array|exists:App\Models\User,id',
-        ]);
-
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
-
-        return \App\Http\Resources\GoalResource::collection(
-            \App\Models\Goal::whereIn('user_id', $employee_ids)->get()
-        );
+        return \App\Http\Resources\GoalResource::collection( $request->user()->goals );
     }
 
     /**
@@ -42,7 +28,7 @@ class GoalsController extends Controller {
             'description' => 'nullable',
             'tracking' => 'required',
             'value' => 'required',
-            'due_date' => 'nullable|date|date_format:"Y-m-d"',
+            'due_date' => 'nullable|date',
         ]);
 
         $goal = \App\Models\Goal::create([
@@ -54,9 +40,7 @@ class GoalsController extends Controller {
             'due_date' => $attr['due_date'],
         ]);
        
-        return new \App\Http\Resources\GoalResource(
-            \App\Models\Goal::find( $goal )
-        );
+        return new \App\Http\Resources\GoalResource($goal);
     }
 
     /**
