@@ -38,6 +38,7 @@ class GoalsController extends Controller {
             'value' => $attr['value'],
             'user_id' => \Auth::id(),
             'due_date' => $attr['due_date'],
+            'options' => []
         ]);
        
         return new \App\Http\Resources\GoalResource($goal);
