@@ -15,7 +15,7 @@ class CreateGoalsTable extends Migration {
         Schema::create('goals', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable()->default(null);
             $table->enum('tracking', ['productive_secs', 'neutral_secs', 'non_productive_secs',]);
             $table->bigInteger('user_id')->unsigned()->nullable()->default(null);
             $table->integer('team_id')->unsigned()->nullable()->default(null);

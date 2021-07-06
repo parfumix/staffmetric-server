@@ -47,9 +47,10 @@ class GoalsController extends Controller {
 
         $goal = \App\Models\Goal::create([
             'title' => $attr['title'],
-            'description' => $attr['description'],
+            'description' => $attr['description'] ?? null,
             'tracking' => $attr['tracking'],
             'value' => $attr['value'],
+            'user_id' => \Auth::id(),
             'due_date' => $attr['due_date'],
         ]);
        
@@ -85,7 +86,7 @@ class GoalsController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id) {
-        //
+    public function destroy(\App\Models\Goal $goal) {
+        $goal->delete();
     }
 }

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Goal extends Model {
     use HasFactory;
 
+    protected $fillable = ['title', 'description', 'tracking', 'user_id', 'team_id', 'value', 'due_date'];
+
     /**
      * Get user instance
      * 
