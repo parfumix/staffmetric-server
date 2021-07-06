@@ -19,6 +19,7 @@ class CreateGoalsTable extends Migration {
             $table->enum('tracking', ['productive_secs', 'neutral_secs', 'non_productive_secs',]);
             $table->bigInteger('user_id')->unsigned()->nullable()->default(null);
             $table->integer('team_id')->unsigned()->nullable()->default(null);
+            $table->integer('value');
             $table->date('due_date');
 
             $table->timestamps();
