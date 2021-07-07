@@ -18,6 +18,7 @@ class GoalResource extends JsonResource {
             'title' => $this->title,
             'description' => $this->description,
             'tracking' => $this->tracking,
+            'value_type' => $this->value_type,
             'value' => $this->value,
             'color' => $this->options['color'],
             'due_date' => $this->due_date,
