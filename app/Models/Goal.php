@@ -13,7 +13,7 @@ class Goal extends Model {
      * Fillable attributes
      * 
      */
-    protected $fillable = ['uuid', 'title', 'description', 'tracking', 'user_id', 'team_id', 'value', 'due_date', 'options', 'active'];
+    protected $fillable = ['uuid', 'title', 'description', 'tracking', 'user_id', 'team_id', 'value', 'value_type', 'due_date', 'options', 'active'];
 
     /**
      * The attributes that should be cast.
