@@ -30,13 +30,15 @@ class TeamsController extends Controller {
             'type' => 'required',
         ]);
 
-        $team = new \App\Models\Team();
-        $team->owner_id = \Auth::id();
-        $team->name = $attr['name'];
-        $team->type = $attr['type'];
+        $team = new \App\Models\Team([
+            'owner_id' => \Auth::id(),
+            'name' => $attr['name'],
+            'type' => $attr['type'],
+        ]);
+
         $team->save();
 
-        return new \App\Http\Resources\TeamResource( $team );
+        return new \App\Http\Resources\TeamResource($team);
     }
 
     /**
