@@ -2,95 +2,85 @@
 
 namespace App\Http\Controllers\API;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Mail;
-use Mpociot\Teamwork\Facades\Teamwork;
-use Mpociot\Teamwork\TeamInvite;
+use Illuminate\Http\Request;
 
 class TeamsController extends Controller {
 
     /**
-     * List team invites
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function invites(Request $request) {
-        return \App\Http\Resources\TeamInviteResource::collection( \Auth::user()->currentTeam->invites );
+    public function index() {
+        return \App\Http\Resources\TeamResource::collection(
+            \Auth::user()->teams 
+        );
     }
 
     /**
-     * @param Request $request
-     * @param int $team_id
-     * @return $this
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
-    public function invite(Request $request) {
-        $request->validate([
-            'email' => 'required|email',
+    public function store(Request $request) {
+        $attr = $request->validate([
+            'name' => 'required',
+            'type' => 'required',
         ]);
 
-        $team = \Auth::user()->currentTeam;
+        $team = \Auth::user()->teams()->create([
+            'owner_id' => \Auth::id(),
+            'name' => $attr['name'],
+            'type' => $attr['type'],
+        ]);
 
-        if (!Teamwork::hasPendingInvite($request->email, $team)) {
-            Teamwork::inviteToTeam($request->email, $team, function ($invite) {
-                Mail::to($invite->email)
-                    ->send(new \App\Mail\TeamInvite($invite));
-            });
-        } else {
-            return response()->json([
-                'errors' => [
-                    'email' => 'The email address is already invited to the team.',
-                ]
-            ]);
-        }
+        return new \App\Http\Resources\TeamResource( $team );
+    }
 
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show(\App\Models\Team $team) {
         return new \App\Http\Resources\TeamResource($team);
     }
 
     /**
-     * Resend an invitation mail.
+     * Update the specified resource in storage.
      *
-     * @param $invite_id
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function resendInvite($invite_id) {
-        $invite = TeamInvite::findOrFail($invite_id);
-        Mail::send('emails.invite', ['team' => $invite->team, 'invite' => $invite], function ($m) use ($invite) {
-            $m->to($invite->email)->subject('Invitation to join team ' . $invite->team->name);
-        });
+    public function update(Request $request, \App\Models\Team $team) {
+        if(! \Auth::user()->isOwnerOfTeam($team)) {
+            return response()->json(['message' => 'Error'], 500);
+        }
+        
+        $attr = $request->validate([
+            'name' => 'required',
+        ]);
 
-        return new \App\Http\Resources\TeamResource($invite->team);
+        $team->update($attr);
+        return new \App\Http\Resources\TeamResource($team);
     }
 
     /**
-     * Accept the given invite.
-     * @param $token
-     * @return \Illuminate\Http\RedirectResponse
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function acceptInvite($token) {
-        $invite = Teamwork::getInviteFromAcceptToken($token);
-
-        if (!$invite) {
-            abort(404);
+    public function destroy(\App\Models\Team $team) {
+        if(! \Auth::user()->isOwnerOfTeam($team)) {
+            return response()->json(['message' => 'Error'], 500);
         }
 
-        if (auth()->check()) {
-            Teamwork::acceptInvite($invite);
-        } else {
-            $user = \App\Models\User::create([
-                'email' => $invite->email,
-                'password' => bcrypt('secret')
-            ]);
-            
-            $user->attachTeam($invite->team);
-
-            // sending welcome message 
-            Mail::send('emails.welcome', ['user' => $user, 'password' => 'secret'], function ($m) use ($user) {
-                $m->to($user->email)->subject('Welcome, ' . $user->name);
-            });
-        }
-
-        return response()->json([
-            'message' => 'Successfully accepted'
-        ]);
+        $team->delete();
+        return response()->json(['success' => true]);
     }
- 
 }

@@ -3,15 +3,14 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class TeamworkSetupTables extends Migration
-{
+class TeamworkSetupTables extends Migration {
+    
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
-    {
+    public function up() {
         Schema::table(\Config::get('teamwork.users_table'), function (Blueprint $table) {
             $table->integer('current_team_id')->unsigned()->nullable()->after('last_login');
         });
@@ -19,6 +18,7 @@ class TeamworkSetupTables extends Migration
         Schema::create(\Config::get('teamwork.teams_table'), function (Blueprint $table) {
             $table->increments('id')->unsigned();
             $table->integer('owner_id')->unsigned()->nullable();
+            $table->enum('type', ['team', 'workspace'])->default('type');
             $table->string('name');
             $table->timestamps();
         });
@@ -61,18 +61,17 @@ class TeamworkSetupTables extends Migration
      *
      * @return void
      */
-    public function down()
-    {
+    public function down() {
         Schema::table(\Config::get('teamwork.users_table'), function (Blueprint $table) {
             $table->dropColumn('current_team_id');
         });
 
         Schema::table(\Config::get('teamwork.team_user_table'), function (Blueprint $table) {
             if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(\Config::get('teamwork.team_user_table').'_user_id_foreign');
+                $table->dropForeign(\Config::get('teamwork.team_user_table') . '_user_id_foreign');
             }
             if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(\Config::get('teamwork.team_user_table').'_team_id_foreign');
+                $table->dropForeign(\Config::get('teamwork.team_user_table') . '_team_id_foreign');
             }
         });
 

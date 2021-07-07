@@ -119,14 +119,6 @@ class User extends Authenticatable {
     }
 
     /**
-     * Get all workspaces
-     * 
-     */
-    public function workspace() {
-        return $this->hasMany(Workspace::class);
-    }
-
-    /**
      * Get goals
      * 
      */

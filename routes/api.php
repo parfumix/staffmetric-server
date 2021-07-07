@@ -5,6 +5,7 @@ use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\TeamsController;
+use App\Http\Controllers\API\InviteController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ApplicationsController;
 use App\Http\Controllers\API\UsersController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\API\ProfilesController;
 use App\Http\Controllers\API\GoalsController;
 use App\Http\Controllers\API\AutomationsController;
 use App\Http\Controllers\AuthController;
-use App\Models\Goal;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Route::post('/token/auth', [AuthController::class, 'token']); //used for local t
 Route::post('/device/auth', [DeviceController::class, 'login']); //used for client device auth
 
 // accept team invite
-Route::get('accept-invite/{token}', [TeamsController::class, 'acceptInvite']);
+Route::get('accept-invite/{token}', [InviteController::class, 'acceptInvite']);
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
@@ -61,13 +61,12 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     Route::match(['get', 'post'], 'analytics/attendace-and-overtime', [AnalyticsController::class, 'attendance']);
 
     // adding invite route
-    Route::prefix('teams')->group(function() {
-        Route::get('invites', [TeamsController::class, 'invites']);
-        Route::post('invite', [TeamsController::class, 'invite']);
-        Route::post('resend-invite/{invite_id}', [TeamsController::class, 'resendInvite']);
-    });
+    Route::get('invites', [InviteController::class, 'invites']);
+    Route::post('invite', [InviteController::class, 'invite']);
+    Route::post('resend-invite/{invite_id}', [InviteController::class, 'resendInvite']);
 
     // adding categories / applications
+    Route::apiResource('teams', TeamsController::class);
     Route::apiResource('goals', GoalsController::class);
     Route::apiResource('categories', CategoriesController::class);
     Route::apiResource('applications', ApplicationsController::class);
