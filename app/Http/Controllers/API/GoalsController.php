@@ -28,6 +28,7 @@ class GoalsController extends Controller {
             'description' => 'nullable',
             'tracking' => 'required',
             'value' => 'required',
+            'color' => 'required',
             'due_date' => 'nullable|date',
         ]);
 
@@ -38,7 +39,9 @@ class GoalsController extends Controller {
             'value' => $attr['value'],
             'user_id' => \Auth::id(),
             'due_date' => $attr['due_date'],
-            'options' => []
+            'options' => [
+                'color' => $attr['color']
+            ]
         ]);
        
         return new \App\Http\Resources\GoalResource($goal);
