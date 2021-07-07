@@ -14,7 +14,7 @@ class TeamsController extends Controller {
      */
     public function index() {
         return \App\Http\Resources\TeamResource::collection(
-            \Auth::user()->teams 
+            \Auth::user()->ownedTeams 
         );
     }
 
@@ -30,11 +30,11 @@ class TeamsController extends Controller {
             'type' => 'required',
         ]);
 
-        $team = \Auth::user()->teams()->create([
-            'owner_id' => \Auth::id(),
-            'name' => $attr['name'],
-            'type' => $attr['type'],
-        ]);
+        $team = new \App\Models\Team();
+        $team->owner_id = \Auth::id();
+        $team->name = $attr['name'];
+        $team->type = $attr['type'];
+        $team->save();
 
         return new \App\Http\Resources\TeamResource( $team );
     }
