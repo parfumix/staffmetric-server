@@ -30,7 +30,7 @@ Route::post('/token/auth', [AuthController::class, 'token']); //used for local t
 Route::post('/device/auth', [DeviceController::class, 'login']); //used for client device auth
 
 // accept team invite
-Route::get('accept-invite/{token}', [InviteController::class, 'acceptInvite']);
+Route::get('accept-invite/{token}', [InviteController::class, 'acceptInvite'])->name('teams.accept_invite');
 
 Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
 
