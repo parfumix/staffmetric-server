@@ -20,7 +20,7 @@ class CreateGoalsTable extends Migration {
             $table->enum('tracking', ['productive_secs', 'neutral_secs', 'non_productive_secs', 'burnout', 'engagment']);
             $table->bigInteger('user_id')->unsigned()->nullable()->default(null);
             $table->integer('team_id')->unsigned()->nullable()->default(null);
-            $table->enum('value_type', ['minutes'])->default('minutes');
+            $table->enum('value_type', ['minutes', 'index'])->default('minutes');
             $table->integer('value');
             $table->boolean('active')->default(true);
             $table->json('options');
