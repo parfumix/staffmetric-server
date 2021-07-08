@@ -222,20 +222,14 @@ class AnalyticsController extends Controller {
             $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
         )->groupBy($groupBy);
 
+        $formatter = function($dateRanges, $data, $defaultValues = ['burnout' => 0, 'engagment' => 0,]) {
+            return collect($dateRanges)->map(function($date) use($data, $defaultValues) {
+                return $data->get($date) ? $data->get($date)->first() : $defaultValues;
+            });
+        };
 
-        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data) {
-            return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
-                'burnout' => 0,
-                'engagment' => 0,
-            ];
-        });
-
-        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data) {
-            return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
-                'burnout' => 0,
-                'engagment' => 0,
-            ];
-        });
+        $formatted_current_data = $formatter($dateRanges, $current_period_data);
+        $formatted_prev_data = $formatter($dateRanges, $prev_period_data);
 
         return response()->json([
             'categories' => $dateRanges,

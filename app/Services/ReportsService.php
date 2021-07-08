@@ -324,8 +324,10 @@ class ReportsService {
             $groupBy = is_array($groupBy) ? $groupBy[0] : $groupBy;
             return [
                 $groupBy => $item->{$groupBy},
-                'burnout' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 100,
-                'engagment' => ($item->productive_secs - $item->idle_secs - $item->overtime_secs) / 100,
+                // we need an formula for burnout
+                'burnout' => ($item->productive_secs + $item->idle_secs + $item->overtime_secs) / 1000,
+                // we need an formula for engagment
+                'engagment' => ($item->productive_secs - $item->idle_secs - $item->overtime_secs) / 1000,
             ];
         });
     }
