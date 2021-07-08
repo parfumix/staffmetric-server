@@ -91,3 +91,26 @@ if (!function_exists('hours_range')) {
         return $hours;
     }
 }
+
+if (!function_exists('generate_prev_date')) {
+    function generate_prev_date($start_at, $end_at, $groupBy) {
+        if( $groupBy == 'year' ) {
+            $prev_start_at = $start_at->copy()->subYear();
+            $prev_end_at = $end_at->copy()->subYear();
+        } elseif ( $groupBy == 'month' ) {
+            $prev_start_at = $start_at->copy()->subMonth();
+            $prev_end_at = $end_at->copy()->subMonth();
+        } elseif ( $groupBy == 'week' ) {
+            $prev_start_at = $start_at->copy()->subWeek();
+            $prev_end_at = $end_at->copy()->subWeek();
+        } elseif ( $groupBy == 'day' ) {
+            $prev_start_at = $start_at->copy()->subDay();
+            $prev_end_at = $end_at->copy()->subDay();
+        } elseif ( $groupBy == 'hour' ) {
+            $prev_start_at = $start_at->copy()->subDay()->startOfDay();
+            $prev_end_at = $end_at->copy()->subDay()->endOfDay();
+        }
+
+        return [$prev_start_at, $prev_end_at];
+    }
+}
