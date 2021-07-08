@@ -35,8 +35,10 @@ class TeamsController extends Controller {
             'name' => $attr['name'],
             'type' => $attr['type'],
         ]);
-
+    
         $team->save();
+
+        \Auth::user()->attachTeam($team);
 
         return new \App\Http\Resources\TeamResource($team);
     }
