@@ -13,6 +13,11 @@ class TeamResource extends JsonResource {
      * @return array
      */
     public function toArray($request) {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+            'name' => $this->name,
+            'users' => \App\Http\Resources\UserResource::collection( $this->users ),
+        ];
     }
 }
