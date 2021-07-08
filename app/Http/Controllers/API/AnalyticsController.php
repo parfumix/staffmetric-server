@@ -32,22 +32,7 @@ class AnalyticsController extends Controller {
             : generate_date_range($start_at, $end_at, $groupBy);
 
         //calculate prev time
-        if( $groupBy == 'year' ) {
-            $prev_start_at = $start_at->copy()->subYear();
-            $prev_end_at = $end_at->copy()->subYear();
-        } elseif ( $groupBy == 'month' ) {
-            $prev_start_at = $start_at->copy()->subMonth();
-            $prev_end_at = $end_at->copy()->subMonth();
-        } elseif ( $groupBy == 'week' ) {
-            $prev_start_at = $start_at->copy()->subWeek();
-            $prev_end_at = $end_at->copy()->subWeek();
-        } elseif ( $groupBy == 'day' ) {
-            $prev_start_at = $start_at->copy()->subDay();
-            $prev_end_at = $end_at->copy()->subDay();
-        } elseif ( $groupBy == 'hour' ) {
-            $prev_start_at = $start_at->copy()->subDay()->startOfDay();
-            $prev_end_at = $end_at->copy()->subDay()->endOfDay();
-        }
+        [$prev_start_at, $prev_end_at] = generate_prev_date($start_at, $end_at, $groupBy);
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -218,6 +203,7 @@ class AnalyticsController extends Controller {
         
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
         $dateRanges = generate_date_range($start_at, $end_at, $groupBy);
+        [$prev_start_at, $prev_end_at] = generate_prev_date($start_at, $end_at, $groupBy);
 
         //TODO check if manager through employeer get access to employees
         $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
@@ -227,13 +213,25 @@ class AnalyticsController extends Controller {
         });
         $employee_ids = $access_to_employees->pluck('name', 'id');
         $employer = \Auth::user();
-
-        $data = $reportsService->getBurnoutAnalytics(
+        
+        $current_period_data = $reportsService->getBurnoutAnalytics(
             $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
         )->groupBy($groupBy);
 
-        $formatted_data = collect($dateRanges)->map(function($date) use($data) {
-            return $data->get($date) ? $data->get($date)->first() : [
+        $prev_period_data = $reportsService->getBurnoutAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
+        )->groupBy($groupBy);
+
+
+        $formatted_current_data = collect($dateRanges)->map(function($date) use($current_period_data) {
+            return $current_period_data->get($date) ? $current_period_data->get($date)->first() : [
+                'burnout' => 0,
+                'engagment' => 0,
+            ];
+        });
+
+        $formatted_prev_data = collect($dateRanges)->map(function($date) use($prev_period_data) {
+            return $prev_period_data->get($date) ? $prev_period_data->get($date)->first() : [
                 'burnout' => 0,
                 'engagment' => 0,
             ];
@@ -242,8 +240,12 @@ class AnalyticsController extends Controller {
         return response()->json([
             'categories' => $dateRanges,
             'data' => [
-                'burnout' => $formatted_data->pluck('burnout'),
-                'engagment' => $formatted_data->pluck('engagment'),
+                'burnout' => $formatted_current_data->pluck('burnout'),
+                'engagment' => $formatted_current_data->pluck('engagment'),
+            ],
+            'prev' => [
+                'burnout' => $formatted_prev_data->pluck('burnout'),
+                'engagment' => $formatted_prev_data->pluck('engagment'),
             ],
         ]);
     }
