@@ -18,7 +18,7 @@ class TeamworkSetupTables extends Migration {
         Schema::create(\Config::get('teamwork.teams_table'), function (Blueprint $table) {
             $table->increments('id')->unsigned();
             $table->integer('owner_id')->unsigned()->nullable();
-            $table->enum('type', ['team', 'workspace'])->default('type');
+            $table->enum('type', ['team', 'workspace'])->default('team');
             $table->string('name');
             $table->timestamps();
         });
