@@ -34,21 +34,14 @@ class AnalyticsController extends Controller {
         //calculate prev time
         [$prev_start_at, $prev_end_at] = generate_prev_date($start_at, $end_at, $groupBy);
 
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $prev_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, [$groupBy, 'user_id'], $fields_to_select
+            \Auth::id(), $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, [$groupBy, 'user_id'], $fields_to_select
         )->groupBy([$groupBy, 'user_id']);
 
         $current_period_data = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
+            \Auth::id(), $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
         )->groupBy([$groupBy, 'user_id']);
 
         $formatted_current_data = [];
@@ -104,19 +97,12 @@ class AnalyticsController extends Controller {
         
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $fields_to_select = ['productive_secs', 'neutral_secs', 'non_productive_secs'];
 
         $users_analytics = $reportsService->getProductivityAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
+            \Auth::id(), $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id'], $fields_to_select
         );
 
         return response()->json([
@@ -139,13 +125,7 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
         
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $data = $reportsService->getTopApps(
             $employee_ids->keys()->toArray(), $start_at, $end_at, null, 6
@@ -170,13 +150,7 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfYear();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfYear();
         
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $data = $reportsService->getTopCategories(
             $employee_ids->keys()->toArray(), $start_at, $end_at
@@ -205,21 +179,14 @@ class AnalyticsController extends Controller {
         $dateRanges = generate_date_range($start_at, $end_at, $groupBy);
         [$prev_start_at, $prev_end_at] = generate_prev_date($start_at, $end_at, $groupBy);
 
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
-        
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
+
         $current_period_data = $reportsService->getBurnoutAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
+            \Auth::id(), $employee_ids->keys()->toArray(), $start_at, $end_at, $groupBy
         )->groupBy($groupBy);
 
         $prev_period_data = $reportsService->getBurnoutAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
+            \Auth::id(), $employee_ids->keys()->toArray(), $prev_start_at, $prev_end_at, $groupBy
         )->groupBy($groupBy);
 
         $formatter = function($dateRanges, $data, $defaultValues = ['burnout' => 0, 'engagment' => 0,]) {
@@ -260,17 +227,10 @@ class AnalyticsController extends Controller {
         
         $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
 
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $users_analytics = $reportsService->getBurnoutAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
+            \Auth::id(), $employee_ids->keys()->toArray(), $start_at, $end_at, [$groupBy, 'user_id']
         );
 
         return response()->json([
@@ -292,20 +252,11 @@ class AnalyticsController extends Controller {
         // if not start_at, end_at set than use start of month
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
         $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
-        
-        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
-
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
-        $employer = \Auth::user();
+    
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         $users_analytics = $reportsService->getBurnoutAnalytics(
-            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, 'user_id'
+            \Auth::id(), $employee_ids->keys()->toArray(), $start_at, $end_at, 'user_id'
         );
 
         return response()->json([
@@ -323,13 +274,7 @@ class AnalyticsController extends Controller {
         $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfWeek();
         $end_at = $start_at->copy()->addWeek();
         
-        //TODO check if manager through employeer get access to employees
-        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
-            return count($validated['employees'] ?? [])
-                ? !in_array($u->id, $validated['employees'])
-                : false;
-        });
-        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
 
         // check wether have access to employee
         if(! in_array($validated['employee_id'], $employee_ids->keys()->toArray())) {
@@ -338,11 +283,9 @@ class AnalyticsController extends Controller {
             ], 403);
         }
 
-        $employer = \Auth::user();
-
         $reportsService = app(\App\Services\ReportsService::class);
         $data = $reportsService->getAttendanceAnalytics(
-            $employer->id, [$validated['employee_id']], $start_at, $end_at, ['day', 'hour']
+            \Auth::id(), [$validated['employee_id']], $start_at, $end_at, ['day', 'hour']
         );
 
         $dates = generate_date_range($start_at, $end_at, 'day', 'Y-m-d');

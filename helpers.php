@@ -114,3 +114,15 @@ if (!function_exists('generate_prev_date')) {
         return [$prev_start_at, $prev_end_at];
     }
 }
+
+if (!function_exists('get_access_employees')) {
+    function get_access_employees($employer, $filterEmplyoees = []) {
+        $access_to_employees = $employer->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($filterEmplyoees) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $filterEmplyoees['employees'])
+                : false;
+        });
+        
+        return $access_to_employees->pluck('name', 'id');
+    }
+}
