@@ -264,6 +264,35 @@ class AnalyticsController extends Controller {
         ]);
     }
 
+    /**
+     * Get top analytics by field from analytics table
+     * 
+     */
+    public function topByEmployees(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
+            'key' => 'required'
+        ]);
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
+    
+        $employee_ids = get_access_employees(\Auth::user(), $validated['employees'] ?? []);
+
+        $users_analytics = $reportsService->getQueryAnalytics(
+            \Auth::id(), $employee_ids->keys()->toArray(), [$validated['key']], $start_at, $end_at, 'user_id',
+        )->get()->sortByDesc($validated['key']);
+
+        return response()->json([
+            'users' => $users_analytics,
+        ]);
+    }
+
     public function attendance(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
