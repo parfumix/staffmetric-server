@@ -289,7 +289,7 @@ class AnalyticsController extends Controller {
         )->get()->sortByDesc($validated['key']);
 
         return response()->json([
-            'users' => $users_analytics,
+            'data' => $users_analytics,
         ]);
     }
 
