@@ -280,6 +280,39 @@ class AnalyticsController extends Controller {
         ]);
     }
 
+    public function topEngagedEmployees(Request $request) {
+        $validated = $request->validate([
+            'start_at' => 'nullable|date|date_format:"Y-m-d"',
+            'end_at' => 'nullable|date|date_format:"Y-m-d"',
+            'employees' => 'nullable|array|exists:App\Models\User,id',
+        ]);
+
+        $reportsService = app(\App\Services\ReportsService::class);
+
+        // if not start_at, end_at set than use start of month
+        $start_at = !empty($validated['start_at']) ? Carbon::createFromFormat('Y-m-d',  $validated['start_at']) : now()->copy()->startOfMonth();
+        $end_at = !empty($validated['end_at']) ? Carbon::createFromFormat('Y-m-d', $validated['end_at']) : now()->copy()->endOfMonth();
+        
+        $groupBy = isset($validated['groupBy']) ? $validated['groupBy'] : 'day';
+
+        //TODO check if manager through employeer get access to employees
+        $access_to_employees = \Auth::user()->employees(\App\Models\User::ACCEPTED)->get()->reject(function ($u) use($validated) {
+            return count($validated['employees'] ?? [])
+                ? !in_array($u->id, $validated['employees'])
+                : false;
+        });
+        $employee_ids = $access_to_employees->pluck('name', 'id');
+        $employer = \Auth::user();
+
+        $users_analytics = $reportsService->getBurnoutAnalytics(
+            $employer->id, $employee_ids->keys()->toArray(), $start_at, $end_at, 'user_id'
+        );
+
+        return response()->json([
+            'users' => $users_analytics,
+        ]);
+    }
+
     public function attendance(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',

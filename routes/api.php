@@ -58,6 +58,7 @@ Route::group(['middleware' => ['auth:sanctum', 'apilogger']], function () {
     // adding burnout reports
     Route::match(['get', 'post'], 'analytics/burnout-and-engagment', [AnalyticsController::class, 'burnout']);
     Route::match(['get', 'post'], 'analytics/engagment-by-employees', [AnalyticsController::class, 'engagmentEmployees']);
+    Route::match(['get', 'post'], 'analytics/top-engaged-employees', [AnalyticsController::class, 'topEngagedEmployees']);
     Route::match(['get', 'post'], 'analytics/attendace-and-overtime', [AnalyticsController::class, 'attendance']);
 
     // adding invite route
