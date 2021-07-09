@@ -260,7 +260,7 @@ class AnalyticsController extends Controller {
         );
 
         return response()->json([
-            'users' => $users_analytics,
+            'data' => $users_analytics,
         ]);
     }
 
