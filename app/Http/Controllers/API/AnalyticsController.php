@@ -255,6 +255,7 @@ class AnalyticsController extends Controller {
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
             'end_at' => 'nullable|date|date_format:"Y-m-d"',
             'employees' => 'nullable|array|exists:App\Models\User,id',
+            'sort_key' => 'nullable'
         ]);
 
         $reportsService = app(\App\Services\ReportsService::class);
@@ -270,14 +271,11 @@ class AnalyticsController extends Controller {
         );
 
         return response()->json([
-            'data' => $users_analytics,
+            'data' => $users_analytics->sortByDesc($validated['sort_key'] ?? 'engagment'),
         ]);
     }
 
-    /**
-     * Get top analytics by field from analytics table
-     * 
-     */
+    // Get top analytics by field from analytics table
     public function topByEmployees(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
