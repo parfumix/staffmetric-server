@@ -8,6 +8,11 @@ use Carbon\Carbon;
 
 class AnalyticsController extends Controller {
     
+
+    /**
+     * Reports by productivity
+    */
+
     public function productivity(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
@@ -161,6 +166,11 @@ class AnalyticsController extends Controller {
         ]);
     }
 
+
+    /**
+     * Reports by engagement, burnout
+    */
+
     public function burnout(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
@@ -292,6 +302,11 @@ class AnalyticsController extends Controller {
             'data' => $users_analytics,
         ]);
     }
+
+
+   /**
+     * Reports by attendace, overtime
+    */
 
     public function attendance(Request $request) {
         $validated = $request->validate([
