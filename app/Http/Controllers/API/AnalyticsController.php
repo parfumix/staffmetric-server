@@ -250,6 +250,7 @@ class AnalyticsController extends Controller {
         ]);
     }
 
+    // it is responsible for calculating engagment, burnout and sorting by top employees
     public function topEngagedEmployees(Request $request) {
         $validated = $request->validate([
             'start_at' => 'nullable|date|date_format:"Y-m-d"',
@@ -271,7 +272,7 @@ class AnalyticsController extends Controller {
         );
 
         return response()->json([
-            'data' => $users_analytics->sortByDesc($validated['sort_key'] ?? 'engagment'),
+            'data' => $users_analytics->sortByDesc($validated['sort_key'] ?? 'engagment')->values(),
         ]);
     }
 
